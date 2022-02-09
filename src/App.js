@@ -1,25 +1,74 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import "./CSS/NavBar.css"
+import GroupForm from "./Components/GroupForm/GroupForm";
+import Title from "./Components/Title";
+import GroupsList from "./Components/GroupForm/GroupsList";
+import { useState } from "react/cjs/react.development";
+import {Routes, Route } from "react-router-dom";
+import RoutesLayout from "./Components/RoutesLayout";
+import PageNotFound from "./Components/PageNotFound";
+import HomePage from "./Components/HomePage";
+import EditGroupForm from "./Components/EditGroupForm"
 
 function App() {
+  const [groups, setGroups] = useState([
+    {
+      groupName: "Family",
+      id:"1",
+      friends: [
+        { firstName: "Chris", lastName: "Randall" },
+        { firstName: "Allie", lastName: "Randall" },
+      ],
+    },
+    {
+      groupName: "Friends",
+      id:"2",
+      friends: [{ firstName: "Evan", lastName: "Jenkies" }],
+    },
+  ]);
+
+  function handleSetGroups(group) {
+    setGroups([...groups, group]);
+  }
+
+  function handleDeleteGroups(index) {
+    setGroups([...groups.slice(0, index), ...groups.slice(index + 1)]);
+  }
+
+  function handleUpdateGroup(editGroup){
+    const editGroupIndex = groups.findIndex(group => group.id === editGroup.id )
+
+    setGroups([...groups.slice(0, editGroupIndex), editGroup, ...groups.slice(editGroupIndex + 1) ])
+
+  }
+
+  function selectGroup(id) {
+    let selectedGroup = groups.find(group => id === group.id)
+
+    return selectedGroup
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Title Title="Welcome To Stuff-Cycler!" />
+      <Routes>
+
+        <Route path="/" element={<RoutesLayout/> }>
+          <Route path="/" index element={<HomePage/>}/>
+          <Route path="/home" index element={<HomePage/>}/>
+          <Route path="/GroupForm"  element={<GroupForm onSubmitGroups={handleSetGroups} />  } />
+          <Route path="/GroupForm/:id/edit"  element={<EditGroupForm selectGroup={selectGroup} onSubmitGroups={handleUpdateGroup} />  } />
+          <Route path="/GroupsList" element={<GroupsList list={groups} onDeleteGroups={handleDeleteGroups} />} />
+          <Route path="*" element={<PageNotFound/>}/>
+        </Route>
+
+
+
+      </Routes>
     </div>
   );
 }
 
 export default App;
+
+

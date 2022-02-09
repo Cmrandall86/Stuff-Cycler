@@ -1,0 +1,12 @@
+.navBar ul{
+    display:flex;
+    color:red;
+    list-style-type: none;
+    justify-content: space-around;
+
+
+}
+
+.NavLink {
+    text-decoration: none;
+}
