@@ -5,7 +5,7 @@ import Input from "../Input";
 import "../../CSS/PostForm.css";
 import ButtonComponent from "../Button";
 
-const PostForm = (props) => {
+const PostForm = ({onSubmitPosts}) => {
   const [post, setPost] = useState({ title: "", description: "" });
 
   const handleSubmitTitle = (e, i) => {
@@ -20,10 +20,15 @@ const PostForm = (props) => {
       
   }
 
+  function handleSubmitPost(e) {
+    e.preventDefault();
+    onSubmitPosts(post)
+  }
+
   return (
     <div className="PostForm">
       <h2 className="form_start_title">Share Your Stuff!</h2>
-      <form onSubmit={console.log()}>
+      <form onSubmit={handleSubmitPost}>
         <Input 
         className={'input'}
           Name={"title"}
@@ -50,7 +55,7 @@ const PostForm = (props) => {
         <ButtonComponent
         className={'post_button'}
           text="Share Item"
-          onClicker={()=>{console.log(post)}}
+          onClicker={handleSubmitPost}
           disabled={false}
         />
       </form>

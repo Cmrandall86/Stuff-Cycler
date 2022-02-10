@@ -30,6 +30,11 @@ const RoutesLayout = (props) => {
               <ButtonComponent text={"Share Stuff"} />
             </Link>
           </li>
+          <li>
+            <Link to="/PostsList" className="NavLink">
+              <ButtonComponent text={"Posts List"} />
+            </Link>
+          </li>
         </ul>
 
       </nav>

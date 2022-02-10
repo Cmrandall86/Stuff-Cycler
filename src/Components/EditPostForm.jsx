@@ -1,21 +1,24 @@
-import React, { useState } from "react";
-import "../../CSS/GroupForm.css";
-import FriendForm from "./FriendForm";
-import ButtonComponent from "../Button";
-import Input from "../Input"
+import React, { useState, useEffect } from "react";
+import "../CSS/GroupForm.css";
+import FriendForm from "./GroupForm/FriendForm";
+import ButtonComponent from "./Button";
+import Input from "./Input"
 import DeleteIcon from "@mui/icons-material/Delete";
-import {Outlet, useParams} from "react-router-dom";
+import {Outlet, Routes, useNavigate , useParams} from "react-router-dom";
 
-function GroupForm(props) {
+function EditGroupForm(props) {
   const [group, setGroup] = useState({
     groupName: "",
     friends: [
-      { firstName: "Chris", lastName: "Randall", isEditing: false },
-      { firstName: "Evan", lastName: "McJiggity", isEditing: false },
     ],
+
     isEditing: false,
   });
+
+  useEffect(()=>{setGroup(props.selectGroup(params.id) )} , [] )
+
   let params = useParams();
+  let navigate = useNavigate()
 
   //#region GroupForm Handler Functions
 
@@ -44,6 +47,8 @@ function GroupForm(props) {
       ...group,
       friends: editedFriendsArray,
     });
+
+    console.log(editedFriendsArray, group.friends);
   }
 
   function setPersonToDisplayMode(i) {
@@ -84,6 +89,9 @@ function GroupForm(props) {
   function handleSubmitGroup(e) {
     e.preventDefault();
     props.onSubmitGroups(group);
+    navigate( "/GroupsList")
+
+
   }
 
   //#endregion
@@ -96,7 +104,7 @@ function GroupForm(props) {
       }
 
       <div id="group_wrapper">
-        <h2 className="form_start_title">Please Make A Group To Start</h2>
+        <h2 className="form_start_title">Edit Group</h2>
         <form onSubmit={handleSubmitGroup} id="groupForm">
           <Input
             Name={"group"}
@@ -107,7 +115,6 @@ function GroupForm(props) {
             onChange={handleSetGroupName}
           />
         <ButtonComponent text="Save Group"  onClicker={handleSubmitGroup}  disabled={!group.groupName && group.friends.length} />
-
         </form>
         <FriendForm onSubmitFriend={handleSetFriends} />
       </div>
@@ -183,4 +190,4 @@ function GroupForm(props) {
   );
 }
 
-export default GroupForm;
+export default EditGroupForm;

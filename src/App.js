@@ -10,6 +10,7 @@ import PageNotFound from "./Components/PageNotFound";
 import HomePage from "./Components/HomePage";
 import EditGroupForm from "./Components/EditGroupForm"
 import PostForm from "./Components/Posts/PostForm";
+import PostsList from "./Components/Posts/PostsList";
 
 function App() {
   const [groups, setGroups] = useState([
@@ -27,6 +28,34 @@ function App() {
       friends: [{ firstName: "Evan", lastName: "Jenkies" }],
     },
   ]);
+
+  const [posts, setPosts] = useState([ 
+    {id:"1" , title:"", description:""} 
+  ]);
+
+  function handleSetPosts(post){
+    setPosts([...posts, post]);
+    console.log(posts)
+  }
+
+  function handleDeletePosts(index) {
+    setPosts([...posts.slice(0, index), ...posts.slice(index + 1)]);
+
+  }
+
+  function handleUpdatePost(editPost){
+    const editPostIndex = posts.findIndex(post => post.id === editPost.id )
+
+    setPosts([...posts.slice(0, editPostIndex), editPost, ...posts.slice(editPostIndex + 1) ])
+
+  }
+
+  function selectPost(id) {
+    let selectedPost = posts.find(post => id === post.id)
+
+    return selectedPost
+  }
+
 
   function handleSetGroups(group) {
     setGroups([...groups, group]);
@@ -61,7 +90,9 @@ function App() {
           <Route path="/GroupForm/:id/edit"  element={<EditGroupForm selectGroup={selectGroup} onSubmitGroups={handleUpdateGroup} />  } />
           <Route path="/GroupsList" element={<GroupsList list={groups} onDeleteGroups={handleDeleteGroups} />} />
           <Route path="*" element={<PageNotFound/>}/>
-          <Route path="/PostForm" element={<PostForm/>}/>
+          <Route path="/PostForm" element={<PostForm onSubmitPosts={handleSetPosts}/>}/>
+          {/* <Route path="/PostForm/:id/edit"  element={<EditPostForm selectPost={selectPost} onSubmitPosts={handleUpdatePost} />  } /> */}
+          <Route path="/PostsList" element={<PostsList list={posts} onDeletePosts={handleDeletePosts} />} />
         </Route>
 
 
