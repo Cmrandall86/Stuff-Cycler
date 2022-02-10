@@ -9,6 +9,7 @@ import RoutesLayout from "./Components/RoutesLayout";
 import PageNotFound from "./Components/PageNotFound";
 import HomePage from "./Components/HomePage";
 import EditGroupForm from "./Components/EditGroupForm"
+import PostForm from "./Components/Posts/PostForm";
 
 function App() {
   const [groups, setGroups] = useState([
@@ -60,6 +61,7 @@ function App() {
           <Route path="/GroupForm/:id/edit"  element={<EditGroupForm selectGroup={selectGroup} onSubmitGroups={handleUpdateGroup} />  } />
           <Route path="/GroupsList" element={<GroupsList list={groups} onDeleteGroups={handleDeleteGroups} />} />
           <Route path="*" element={<PageNotFound/>}/>
+          <Route path="/PostForm" element={<PostForm/>}/>
         </Route>
 
 

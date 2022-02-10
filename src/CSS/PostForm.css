@@ -1,0 +1,15 @@
+.PostForm {
+    display:flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.input {
+    gap:20px;
+    padding: 20px;
+    margin:20px;
+}
+
+.post_button {
+    color:red;
+}

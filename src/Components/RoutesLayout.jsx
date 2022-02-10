@@ -24,6 +24,12 @@ const RoutesLayout = (props) => {
               <ButtonComponent text={"List of Groups"} />
             </Link>
           </li>
+
+          <li>
+            <Link to="/PostForm" className="NavLink">
+              <ButtonComponent text={"Share Stuff"} />
+            </Link>
+          </li>
         </ul>
 
       </nav>

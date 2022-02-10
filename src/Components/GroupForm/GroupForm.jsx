@@ -4,7 +4,7 @@ import FriendForm from "./FriendForm";
 import ButtonComponent from "../Button";
 import Input from "../Input"
 import DeleteIcon from "@mui/icons-material/Delete";
-import {Outlet, Routes, useParams} from "react-router-dom";
+import {Outlet, useParams} from "react-router-dom";
 
 function GroupForm(props) {
   const [group, setGroup] = useState({
@@ -108,7 +108,8 @@ function GroupForm(props) {
             Label={"Group Name: "}
             onChange={handleSetGroupName}
           />
-          {group.groupName && group.friends.length ? <ButtonComponent text="Save Group"  onClicker={handleSubmitGroup} /> : <ButtonComponent text="Save Group" disabled={true} onClicker={handleSubmitGroup} /> } 
+        <ButtonComponent text="Save Group"  onClicker={handleSubmitGroup}  disabled={!group.groupName && group.friends.length} />
+
         </form>
         <FriendForm onSubmitFriend={handleSetFriends} />
       </div>

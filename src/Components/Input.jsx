@@ -2,10 +2,11 @@ import React from "react";
 import PropTypes from "prop-types";
 import { TextField } from "@mui/material";
 
-const Input = ({ Placeholder, Name, Type, Value, Label, onChange, ID }) => {
+const Input = ({ Placeholder, Name, Type, Value, Label, onChange, ID, rows, className }) => {
   return (
-    <div className="form__group field">
+    <div >
       <TextField 
+      className = {className}
       id={ID} 
       label={Label} 
       variant="outlined"
@@ -15,6 +16,8 @@ const Input = ({ Placeholder, Name, Type, Value, Label, onChange, ID }) => {
       onChange={onChange}
       type={Type}
       name={Name}
+      multiline
+      rows={rows}
        />
 
     </div>
