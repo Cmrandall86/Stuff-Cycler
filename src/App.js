@@ -11,6 +11,7 @@ import HomePage from "./Components/HomePage";
 import EditGroupForm from "./Components/GroupForm/EditGroupForm"
 import PostForm from "./Components/Posts/PostForm";
 import PostsList from "./Components/Posts/PostsList";
+import Card from "./Components/Card";
 
 function App() {
   const [groups, setGroups] = useState([
@@ -84,7 +85,7 @@ function App() {
 
         <Route path="/" element={<RoutesLayout/> }>
           <Route path="/" index element={<HomePage/>}/>
-          <Route path="/home" index element={<HomePage/>}/>
+          <Route path="/home" index element={ <HomePage/>}/>
           <Route path="/GroupForm"  element={<GroupForm onSubmitGroups={handleSetGroups} />  } />
           <Route path="/GroupForm/:id/edit"  element={<EditGroupForm selectGroup={selectGroup} onSubmitGroups={handleUpdateGroup} />  } />
           <Route path="/GroupsList" element={<GroupsList list={groups} onDeleteGroups={handleDeleteGroups} />} />

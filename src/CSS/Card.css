@@ -1,0 +1,8 @@
+.card {
+    display: flex;
+    justify-content: center;
+    border: 1px solid lightgray;
+    padding:20px;
+    margin:20px;
+    /* ask jenkins about the white drop shadow from last project */
+}

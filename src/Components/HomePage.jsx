@@ -3,10 +3,13 @@ import PropTypes from "prop-types";
 import { Link, Outlet } from "react-router-dom";
 import ButtonComponent from "./Button";
 import "../CSS/HomePage.css";
+import Card from "./Card";
 
 const HomePage = (props) => {
   return (
+
     <div className="HomePage">
+
       <h2>Thanks for checking out Stuff-Cycler</h2>
       <p>
         The idea here is that we can make a group of people, give them a level
