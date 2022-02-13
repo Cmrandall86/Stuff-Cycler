@@ -4,7 +4,7 @@ import FriendForm from "./GroupForm/FriendForm";
 import ButtonComponent from "./Button";
 import Input from "./Input"
 import DeleteIcon from "@mui/icons-material/Delete";
-import {Outlet, Routes, useNavigate , useParams} from "react-router-dom";
+import {Outlet, useNavigate , useParams} from "react-router-dom";
 
 function EditGroupForm(props) {
   const [group, setGroup] = useState({

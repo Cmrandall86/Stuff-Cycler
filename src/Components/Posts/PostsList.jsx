@@ -1,5 +1,5 @@
 import React from "react";
-// import "../../CSS/GroupsList.css";
+import "../../CSS/PostsList.css";
 import PostListItem from "./PostListItem";
 
 function PostsList({ list, onDeletePosts }) {

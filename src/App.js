@@ -8,7 +8,7 @@ import {Routes, Route } from "react-router-dom";
 import RoutesLayout from "./Components/RoutesLayout";
 import PageNotFound from "./Components/PageNotFound";
 import HomePage from "./Components/HomePage";
-import EditGroupForm from "./Components/EditGroupForm"
+import EditGroupForm from "./Components/GroupForm/EditGroupForm"
 import PostForm from "./Components/Posts/PostForm";
 import PostsList from "./Components/Posts/PostsList";
 
@@ -30,12 +30,11 @@ function App() {
   ]);
 
   const [posts, setPosts] = useState([ 
-    {id:"1" , title:"", description:""} 
+    {id:"1" , title:"Book", description:"This is a book"} 
   ]);
 
   function handleSetPosts(post){
     setPosts([...posts, post]);
-    console.log(posts)
   }
 
   function handleDeletePosts(index) {

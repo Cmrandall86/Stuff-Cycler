@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import "../CSS/GroupForm.css";
-import FriendForm from "./GroupForm/FriendForm";
-import ButtonComponent from "./Button";
-import Input from "./Input"
+import "../../CSS/GroupForm.css";
+import FriendForm from "./FriendForm";
+import ButtonComponent from "../Button";
+import Input from "../Input"
 import DeleteIcon from "@mui/icons-material/Delete";
 import {Outlet, Routes, useNavigate , useParams} from "react-router-dom";
 

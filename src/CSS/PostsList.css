@@ -1,9 +1,11 @@
-#groupsListWrapper{
+#postsListWrapper {
     display:flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
 }
 
-#groupsList {
+#postsList {
     display:flex;
     flex-direction: column;
     justify-content: center;
@@ -11,20 +13,20 @@
     margin-top: 10px;
     border: 1px solid black;
     width: 45%;
-    padding:20px
-
-    }
-
-#groupsList li {
-    margin: 10px 0 10px;
     list-style-type: none;
+}
+
+
+
+#postsList li {
+    margin: 10px 0 10px;
     font-size: 1.5em;
+    
 
     
 }
 
-#groupsList li button{
+#postsList li button{
     margin-left: 10px;
 }
-
 

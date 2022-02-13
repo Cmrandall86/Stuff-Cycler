@@ -25,7 +25,6 @@ function GroupForm(props) {
   }
 
   function handleSetFriends(friend) {
-    console.log(group);
     setGroup({ ...group, friends: [...group.friends, friend] });
   }
 
@@ -88,7 +87,6 @@ function GroupForm(props) {
 
   //#endregion
 
-  console.log(params)
   return (
     <div id="group_form_wrapper">
       {
@@ -106,7 +104,7 @@ function GroupForm(props) {
             Label={"Group Name: "}
             onChange={handleSetGroupName}
           />
-        <ButtonComponent text="Save Group"  onClicker={handleSubmitGroup}  disabled={!group.groupName && group.friends.length} />
+        <ButtonComponent text="Save Group"  onClicker={handleSubmitGroup}  disabled={!group.groupName && group.friends.length} /> {/* this evaluates to 0 if true */}
 
         </form>
         <FriendForm onSubmitFriend={handleSetFriends} />

@@ -1,10 +1,26 @@
-.PostForm {
+.postFormWrapper{
+    display:flex;
+    justify-content: center;
+    padding:30px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.PostForm form{
     display:flex;
     align-items: center;
     flex-direction: column;
+    border: 1px solid black;
+    width: 40vw;
+    justify-content: center;
+    padding:40px;
+    gap:10px;
+    
+
+
 }
 
-.input {
+.PostForm Input {
     gap:20px;
     padding: 20px;
     margin:20px;
