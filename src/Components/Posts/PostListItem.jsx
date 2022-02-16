@@ -11,7 +11,7 @@ const PostListItem = ({ post, onDeletePosts }) => {
         <li key={post.index}>
           {/* {`${group.groupName} has ${group.friends.length} friends `} */}
             {`${post.title}`}
-            <Link to={`/PostForm`} className="NavLink">
+            <Link to={`/PostForm/${post.id}/edit`} className="NavLink">
             <ButtonComponent text={"Edit"} onClicker={()=>{console.log(post)}}/>
             </Link>
           <ButtonComponent

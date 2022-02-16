@@ -1,13 +1,22 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { useState } from "react";
-import Input from "../Input";
-import "../../CSS/PostForm.css";
+import React, { useState, useEffect } from "react";
+import "../../CSS/GroupForm.css";
 import ButtonComponent from "../Button";
+import Input from "../Input"
+import {useNavigate , useParams} from "react-router-dom";
 import Card from "../Card";
 
-const PostForm = ({ onSubmitPosts }) => {
-  const [post, setPost] = useState({ title: "", description: "" });
+function EditPostForm(props) {
+  const [post, setPost] = useState({
+     title: "", description: "", 
+
+    isEditing: false,
+  });
+
+  useEffect(()=>{setPost(props.selectPost(params.id) )} , [] )
+
+  let params = useParams();
+  let navigate = useNavigate()
+
 
   const handleSetPost = (e, i) => {
     const nameValue = e.target.value;
@@ -21,7 +30,9 @@ const PostForm = ({ onSubmitPosts }) => {
 
   function handleSubmitPost(e) {
     e.preventDefault();
-    onSubmitPosts(post);
+    props.onSubmitPosts(post);
+    navigate( "/PostsList")
+
   }
 
   return (
@@ -52,18 +63,6 @@ const PostForm = ({ onSubmitPosts }) => {
             handleSetPost(e, i);
           }}
         />
-        <Input
-          className={"input"}
-          Name={"id"}
-          Placeholder={"Item ID"}
-          Type={"text"}
-          Value={post.id}
-          rows={1}
-          Label={"Item ID: "}
-          onChange={(e, i) => {
-            handleSetPost(e, i);
-          }}
-        />
         <ButtonComponent
           className={"post_button"}
           text="Share Item"
@@ -75,8 +74,6 @@ const PostForm = ({ onSubmitPosts }) => {
   </div> }/>
     
   );
-};
+}
 
-PostForm.propTypes = {};
-
-export default PostForm;
+export default EditPostForm;

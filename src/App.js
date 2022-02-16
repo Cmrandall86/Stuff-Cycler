@@ -12,6 +12,7 @@ import EditGroupForm from "./Components/GroupForm/EditGroupForm"
 import PostForm from "./Components/Posts/PostForm";
 import PostsList from "./Components/Posts/PostsList";
 import Card from "./Components/Card";
+import EditPostForm from "./Components/Posts/EditPostForm";
 
 function App() {
   const [groups, setGroups] = useState([
@@ -40,14 +41,12 @@ function App() {
 
   function handleDeletePosts(index) {
     setPosts([...posts.slice(0, index), ...posts.slice(index + 1)]);
-
   }
 
   function handleUpdatePost(editPost){
     const editPostIndex = posts.findIndex(post => post.id === editPost.id )
 
     setPosts([...posts.slice(0, editPostIndex), editPost, ...posts.slice(editPostIndex + 1) ])
-
   }
 
   function selectPost(id) {
@@ -55,7 +54,6 @@ function App() {
 
     return selectedPost
   }
-
 
   function handleSetGroups(group) {
     setGroups([...groups, group]);
@@ -69,7 +67,6 @@ function App() {
     const editGroupIndex = groups.findIndex(group => group.id === editGroup.id )
 
     setGroups([...groups.slice(0, editGroupIndex), editGroup, ...groups.slice(editGroupIndex + 1) ])
-
   }
 
   function selectGroup(id) {
@@ -91,7 +88,7 @@ function App() {
           <Route path="/GroupsList" element={<GroupsList list={groups} onDeleteGroups={handleDeleteGroups} />} />
           <Route path="*" element={<PageNotFound/>}/>
           <Route path="/PostForm" element={<PostForm onSubmitPosts={handleSetPosts}/>}/>
-          {/* <Route path="/PostForm/:id/edit"  element={<EditPostForm selectPost={selectPost} onSubmitPosts={handleUpdatePost} />  } /> */}
+          <Route path="/PostForm/:id/edit"  element={<EditPostForm selectPost={selectPost} onSubmitPosts={handleUpdatePost} />  } />
           <Route path="/PostsList" element={<PostsList list={posts} onDeletePosts={handleDeletePosts} />} />
         </Route>
 
