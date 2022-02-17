@@ -3,7 +3,7 @@ import "../../CSS/GroupForm.css";
 import FriendForm from "./FriendForm";
 import ButtonComponent from "../Button";
 import Input from "../Input";
-import { Outlet, useParams } from "react-router-dom";
+import { Outlet, useParams, useNavigate } from "react-router-dom";
 import Card from "../Card";
 import FriendsList from "./FriendsList";
 
@@ -18,6 +18,7 @@ function GroupForm(props) {
   });
 
   let params = useParams();
+  let navigate = useNavigate();
 
   //#region GroupForm Handler Functions
 
@@ -33,6 +34,7 @@ function GroupForm(props) {
   function handleSubmitGroup(e) {
     e.preventDefault();
     props.onSubmitGroups(group);
+    navigate('/GroupsList')
   }
   //#endregion
 

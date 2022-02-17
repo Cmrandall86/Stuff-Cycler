@@ -1,26 +1,28 @@
 import PropTypes from "prop-types";
 import ButtonComponent from "../Button";
 import "@fontsource/roboto/300.css";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const GroupListItem = ({ group, onDeleteGroups }) => {
-
+  const navigate = useNavigate();
   return (
-
     <div>
-        <li key={group.index}>
-          {`${group.groupName} has ${group.friends.length} friends `}
+      <li key={group.index}>
+        {`${group.groupName} has ${group.friends.length} friends `}
 
-            <Link to={`/GroupForm/${group.id}/edit`} className="NavLink">
-            <ButtonComponent text={"Edit"} onClicker={()=>{console.log(group)}}/>
-            </Link>
-          <ButtonComponent
-            color={"red"}
-            text={"Delete"}
-            onClicker={onDeleteGroups}
-          />
-        </li>
+        <ButtonComponent
+          text={"Edit"}
+          onClicker={() => {
+            navigate(`/GroupForm/${group.id}/edit`);
+          }}
+        />
 
+        <ButtonComponent
+          color={"red"}
+          text={"Delete"}
+          onClicker={onDeleteGroups}
+        />
+      </li>
     </div>
   );
 };

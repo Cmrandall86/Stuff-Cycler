@@ -20,10 +20,10 @@
 
 }
 
-.PostForm Input {
-    gap:20px;
-    padding: 20px;
-    margin:20px;
+.PostForm .input {
+    padding: 2px;
+    margin:2px;
+    width: 30vw;
 }
 
 .post_button {

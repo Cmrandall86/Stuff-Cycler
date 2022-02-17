@@ -22,11 +22,35 @@
     margin: 10px 0 10px;
     font-size: 1.5em;
     
-
-    
 }
 
 #postsList li button{
     margin-left: 10px;
 }
 
+
+
+#PostsGroups {
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    border: 1px solid black;
+    width: 40vw;
+    padding:20px;
+    list-style-type: none;
+}
+
+
+#postTitle{
+    margin-bottom: 20px;
+}
+
+.PostGroupItem{
+    font-size: 1.5rem;
+}
+
+.PostForm {
+
+}
