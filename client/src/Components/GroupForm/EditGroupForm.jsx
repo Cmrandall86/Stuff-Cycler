@@ -2,23 +2,29 @@ import React, { useState, useEffect } from "react";
 import "../../CSS/GroupForm.css";
 import FriendForm from "./FriendForm";
 import ButtonComponent from "../Button";
-import Input from "../Input"
+import Input from "../Input";
 import DeleteIcon from "@mui/icons-material/Delete";
-import {Outlet, useNavigate , useParams} from "react-router-dom";
+import { Outlet, useNavigate, useParams } from "react-router-dom";
 
 function EditGroupForm(props) {
   const [group, setGroup] = useState({
     groupName: "",
-    friends: [
-    ],
+    friends: [],
 
     isEditing: false,
   });
 
-  useEffect(()=>{setGroup(props.selectGroup(params.id) )} , [] )
-
   let params = useParams();
-  let navigate = useNavigate()
+
+  useEffect(() => {
+    console.log(params.id)
+    fetch(`http://localhost:8000/groups/${params.id}`)
+      .then((response) => response.json())
+      .then((data) => setGroup(data));
+  }, []);
+
+  console.log(group)
+  let navigate = useNavigate();
 
   //#region GroupForm Handler Functions
 
@@ -47,8 +53,6 @@ function EditGroupForm(props) {
       ...group,
       friends: editedFriendsArray,
     });
-
-    console.log(editedFriendsArray, group.friends);
   }
 
   function setPersonToDisplayMode(i) {
@@ -89,14 +93,11 @@ function EditGroupForm(props) {
   function handleSubmitGroup(e) {
     e.preventDefault();
     props.onSubmitGroups(group);
-    navigate( "/GroupsList")
-
-
+    navigate("/GroupsList");
   }
 
   //#endregion
 
-  console.log(params)
   return (
     <div id="group_form_wrapper">
       {
@@ -114,7 +115,11 @@ function EditGroupForm(props) {
             Label={"Group Name: "}
             onChange={handleSetGroupName}
           />
-        <ButtonComponent text="Save Group"  onClicker={handleSubmitGroup}  disabled={!group.groupName && group.friends.length} />
+          <ButtonComponent
+            text="Save Group"
+            onClicker={handleSubmitGroup}
+            disabled={!group.groupName || group.friends.length}
+          />
         </form>
         <FriendForm onSubmitFriend={handleSetFriends} />
       </div>
@@ -128,7 +133,7 @@ function EditGroupForm(props) {
       }
 
       <div id="friends_list_wrapper">
-      <h2 className="form_start_title">List of Friends</h2>
+        <h2 className="form_start_title">List of Friends</h2>
 
         <ul id="friend_list">
           {group.friends.map((friend, i) => {
@@ -156,7 +161,7 @@ function EditGroupForm(props) {
                       text="Save"
                       color="#00FFFF"
                       onClicker={() => setPersonToDisplayMode(i)}
-                    /> 
+                    />
                   </li>
                 </div>
               );
@@ -184,8 +189,7 @@ function EditGroupForm(props) {
       {
         //#endregion
       }
-            <Outlet/>
-
+      <Outlet />
     </div>
   );
 }

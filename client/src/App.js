@@ -3,7 +3,7 @@ import "./CSS/NavBar.css"
 import GroupForm from "./Components/GroupForm/GroupForm";
 import Title from "./Components/Title";
 import GroupsList from "./Components/GroupForm/GroupsList";
-import { useState } from "react/cjs/react.development";
+import { useState, useEffect } from "react/cjs/react.development";
 import {Routes, Route } from "react-router-dom";
 import RoutesLayout from "./Components/RoutesLayout";
 import PageNotFound from "./Components/PageNotFound";
@@ -16,26 +16,11 @@ import EditPostForm from "./Components/Posts/EditPostForm";
 
 function App() {
   const [groups, setGroups] = useState([
-    {
-      groupName: "Family",
-      id:"1",
-      friends: [
-        { firstName: "Chris", lastName: "Randall" },
-        { firstName: "Allie", lastName: "Randall" },
-      ],
-    },
-    {
-      groupName: "Friends",
-      id:"2",
-      friends: [{ firstName: "Evan", lastName: "Jenkies" }],
-    },
+
   ]);
 
   const [posts, setPosts] = useState([ 
-    {id:"1" , title:"Book", description:"This is a book"} 
   ]);
-
-  const [completedPost, setCompletedPost] = useState([])
 
   function handleSetPosts(post){
     setPosts([...posts, post]);
@@ -89,7 +74,7 @@ function App() {
           <Route path="/home" index element={ <HomePage/>}/>
           <Route path="/GroupForm"  element={<GroupForm onSubmitGroups={handleSetGroups} />  } />
           <Route path="/GroupForm/:id/edit"  element={<EditGroupForm selectGroup={selectGroup} onSubmitGroups={handleUpdateGroup} />  } />
-          <Route path="/GroupsList" element={<GroupsList list={groups} onDeleteGroups={handleDeleteGroups} />} />
+          <Route path="/GroupsList" element={<GroupsList onDeleteGroups={handleDeleteGroups} />} />
           <Route path="*" element={<PageNotFound/>}/>
           <Route path="/PostForm" element={ <PostForm onSubmitPosts={handleSetPosts} list={groups}/> }    />
           <Route path="/PostForm/:id/edit"  element={<EditPostForm selectPost={selectPost} onSubmitPosts={handleUpdatePost} />  } />
