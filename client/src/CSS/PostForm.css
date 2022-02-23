@@ -1,0 +1,31 @@
+.postFormWrapper{
+    display:flex;
+    justify-content: center;
+    padding:30px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.PostForm form{
+    display:flex;
+    align-items: center;
+    flex-direction: column;
+    border: 1px solid black;
+    width: 40vw;
+    justify-content: center;
+    padding:40px;
+    gap:10px;
+    
+
+
+}
+
+.PostForm .input {
+    padding: 2px;
+    margin:2px;
+    width: 30vw;
+}
+
+.post_button {
+    color:red;
+}
