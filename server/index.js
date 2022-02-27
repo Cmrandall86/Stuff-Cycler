@@ -23,6 +23,7 @@ const groups = [
 const posts = [
   { id: "1", title: "Book", description: "This is a book" },
   { id: "2", title: "Computer", description: "This is a computer" },
+  { id: "3", title: "Desk", description: "This is a desk" }
 ];
 
 app.get("/groups", (req, res) => {
@@ -38,5 +39,5 @@ app.get("/posts", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`Server is up and running on ${port}`);
 });
