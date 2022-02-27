@@ -38,6 +38,10 @@ app.get("/posts", (req, res) => {
   res.send(posts);
 });
 
+app.get("/posts/:id", (req, res) => {
+  res.send(posts.find((post) => post.id === req.params.id));
+});
+
 app.listen(port, () => {
   console.log(`Server is up and running on ${port}`);
 });

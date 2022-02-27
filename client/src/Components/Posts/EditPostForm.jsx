@@ -12,11 +12,16 @@ function EditPostForm(props) {
     isEditing: false,
   });
 
-  useEffect(()=>{setPost(props.selectPost(params.id) )} , [] )
-
   let params = useParams();
-  let navigate = useNavigate()
 
+  useEffect(() => {
+    console.log(params.id)
+    fetch(`http://localhost:8000/posts/${params.id}`)
+      .then((response) => response.json())
+      .then((data) => setPost(data));
+  }, []);
+
+  let navigate = useNavigate()
 
   const handleSetPost = (e, i) => {
     const nameValue = e.target.value;
