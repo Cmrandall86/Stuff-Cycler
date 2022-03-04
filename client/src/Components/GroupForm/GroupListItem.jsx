@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 
 const GroupListItem = ({ group, onDeleteGroups }) => {
   const navigate = useNavigate();
-  console.log(group)
   return (
     <div>
       <li key={group.index}>

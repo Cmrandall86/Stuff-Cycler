@@ -10,7 +10,7 @@ const PostGroupItem = ({ group, handleSelectGroup, selectedGroups, index }) => {
           onChange={()=> handleSelectGroup(index)}
           checked={selectedGroups[index]}
         />
-        {`${group.groupName} has ${group.friends.length} friends `}
+        {`${group.groupName}`}
         This checkbox is {selectedGroups[index] ? "checked" : "unchecked"}.
       </li>
   );
