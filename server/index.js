@@ -64,6 +64,10 @@ app.delete("/groups/:id/delete", (req, res) => {
   res.send(console.log(req.params));
 });
 
+app.post("/groups", (req, res) => {
+  res.send(console.log(req.body))
+})
+
 app.get("/posts", (req, res) => {
   db.all("SELECT * FROM posts", (err, posts) => {
     if (err) {

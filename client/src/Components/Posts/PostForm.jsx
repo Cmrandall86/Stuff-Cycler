@@ -8,26 +8,29 @@ import Card from "../Card";
 import PostGroups from "./PostGroups";
 import { useNavigate } from "react-router-dom";
 
-const PostForm = ({ onSubmitPosts }) => {
-  const [post, setPost] = useState({ title: "", description: ""});
-  const [list, setList] =  useState([])
-  const [selectedGroups, setSelectedGroups] = useState(new Array(list.length).fill(false))
+const PostForm = () => {
+  const [post, setPost] = useState({ title: "", description: "" });
+  const [list, setList] = useState([]);
+  const [selectedGroups, setSelectedGroups] = useState(
+    new Array(list.length).fill(false)
+  );
 
   useEffect(() => {
     fetch("http://localhost:8000/groups")
       .then((response) => response.json())
-      .then((data) => setList(data)).catch((error)=>console.log(error));
+      .then((data) => setList(data))
+      .catch((error) => console.log(error));
   }, []);
-
 
   const handleSelectGroup = (position) => {
     const updatedCheckedState = selectedGroups.map((item, index) =>
       index === position ? !item : item
     );
 
-    setSelectedGroups(updatedCheckedState);}
+    setSelectedGroups(updatedCheckedState);
+  };
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleSetPost = (e, i) => {
     const nameValue = e.target.value;
@@ -39,25 +42,26 @@ const PostForm = ({ onSubmitPosts }) => {
     });
   };
 
-  // 
+  const selectedGroupData = selectedGroups
+    .map((isSelected, index) => {
+      if (isSelected === true) {
+        return list[index].id;
+      }
+      return false;
+    })
+    .filter((data) => data !== false);
 
-  const selectedGroupData = selectedGroups.map((isSelected, index) => {
-    if( isSelected === true) {
-      return list[index].id
-    }
-    return false
-  } ).filter(data => data !== false)
+  //Is this the function where we fetch and post?  
 
-  console.log(selectedGroupData)
+  const onSubmitPosts = () => {
+    fetch("http://localhost:8000/groups" , {method: "POST"}).then(console.log(post))
+  }
 
   function handleSubmitPost(e) {
     e.preventDefault();
-    onSubmitPosts({...post, groups: selectedGroupData});
-    navigate('/PostsList')
-
-
+    onSubmitPosts({ ...post, groups: selectedGroupData });
+    navigate("/PostsList");
   }
-
 
   return (
     <Card
@@ -102,7 +106,11 @@ const PostForm = ({ onSubmitPosts }) => {
                 }}
               />
 
-              <PostGroups list={list} handleSelectGroup={handleSelectGroup} selectedGroups= {selectedGroups} />
+              <PostGroups
+                list={list}
+                handleSelectGroup={handleSelectGroup}
+                selectedGroups={selectedGroups}
+              />
               <ButtonComponent
                 className={"post_button"}
                 text="Share Item"
