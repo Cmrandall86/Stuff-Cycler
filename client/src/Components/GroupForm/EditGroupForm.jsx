@@ -17,13 +17,11 @@ function EditGroupForm(props) {
   let params = useParams();
 
   useEffect(() => {
-    console.log(params.id)
     fetch(`http://localhost:8000/groups/${params.id}`)
       .then((response) => response.json())
       .then((data) => setGroup(data));
   }, []);
 
-  console.log(group)
   let navigate = useNavigate();
 
   //#region GroupForm Handler Functions
@@ -34,7 +32,6 @@ function EditGroupForm(props) {
   }
 
   function handleSetFriends(friend) {
-    console.log(group);
     setGroup({ ...group, friends: [...group.friends, friend] });
   }
 
@@ -54,6 +51,7 @@ function EditGroupForm(props) {
       friends: editedFriendsArray,
     });
   }
+
 
   function setPersonToDisplayMode(i) {
     const personTarget = group.friends[i];
@@ -98,6 +96,8 @@ function EditGroupForm(props) {
 
   //#endregion
 
+  console.log(group.groupName)
+
   return (
     <div id="group_form_wrapper">
       {
@@ -118,7 +118,7 @@ function EditGroupForm(props) {
           <ButtonComponent
             text="Save Group"
             onClicker={handleSubmitGroup}
-            disabled={!group.groupName || group.friends.length}
+            disabled={!group.groupName || group.friends.length === 0}
           />
         </form>
         <FriendForm onSubmitFriend={handleSetFriends} />

@@ -3,7 +3,7 @@ import "../../CSS/GroupsList.css";
 import GroupListItem from "./GroupListItem";
 import { useEffect, useState } from "react";
 
-function GroupsList({ onDeleteGroups }) {
+function GroupsList() {
   const [list, setList] = useState([]);
 
   useEffect(() => {
@@ -12,6 +12,10 @@ function GroupsList({ onDeleteGroups }) {
       .then((data) => setList(data)).catch((error)=>console.log(error));
   }, []);
 
+  const onDeleteGroups = (id) => fetch(`http://localhost:8000/groups/${id}/delete`, { method: "DELETE"})
+      .then((response) => response.json())
+      .catch((error)=>console.log(error));
+  
   return (
     <div id="groupsListWrapper">
       <div id="groupsList">
@@ -19,7 +23,8 @@ function GroupsList({ onDeleteGroups }) {
           return (
             <GroupListItem
               group={group}
-              onDeleteGroups={() => onDeleteGroups(index)}
+              // do i fetch right here for my delete route? 
+              onDeleteGroups={() => onDeleteGroups(group.id)}
               key={index}
             />
           );

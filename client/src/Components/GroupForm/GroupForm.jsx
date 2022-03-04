@@ -10,12 +10,15 @@ import FriendsList from "./FriendsList";
 function GroupForm(props) {
   const [group, setGroup] = useState({
     groupName: "",
-    friends: [
-      { firstName: "Chris", lastName: "Randall", isEditing: false },
-      { firstName: "Evan", lastName: "McJiggity", isEditing: false },
-    ],
-    isEditing: false,
+    friends: [],
+    isEditing: false
   });
+
+  // [
+  //   { firstName: "Chris", lastName: "Randall", isEditing: false },
+  //   { firstName: "Evan", lastName: "McJiggity", isEditing: false },
+  // ],
+  // ,
 
   let params = useParams();
   let navigate = useNavigate();

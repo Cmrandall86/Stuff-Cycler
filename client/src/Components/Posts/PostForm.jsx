@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Input from "../Input";
 import "../../CSS/PostForm.css";
 import ButtonComponent from "../Button";
@@ -8,9 +8,16 @@ import Card from "../Card";
 import PostGroups from "./PostGroups";
 import { useNavigate } from "react-router-dom";
 
-const PostForm = ({ onSubmitPosts, list }) => {
+const PostForm = ({ onSubmitPosts }) => {
   const [post, setPost] = useState({ title: "", description: ""});
+  const [list, setList] =  useState([])
   const [selectedGroups, setSelectedGroups] = useState(new Array(list.length).fill(false))
+
+  useEffect(() => {
+    fetch("http://localhost:8000/groups")
+      .then((response) => response.json())
+      .then((data) => setList(data)).catch((error)=>console.log(error));
+  }, []);
 
 
   const handleSelectGroup = (position) => {

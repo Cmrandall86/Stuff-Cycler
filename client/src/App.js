@@ -76,7 +76,7 @@ function App() {
           <Route path="/GroupForm/:id/edit"  element={<EditGroupForm selectGroup={selectGroup} onSubmitGroups={handleUpdateGroup} />  } />
           <Route path="/GroupsList" element={<GroupsList onDeleteGroups={handleDeleteGroups} />} />
           <Route path="*" element={<PageNotFound/>}/>
-          <Route path="/PostForm" element={ <PostForm onSubmitPosts={handleSetPosts} list={groups}/> }    />
+          <Route path="/PostForm" element={ <PostForm onSubmitPosts={handleSetPosts}/> }    />
           <Route path="/PostForm/:id/edit"  element={<EditPostForm selectPost={selectPost} onSubmitPosts={handleUpdatePost} />  } />
           <Route path="/PostsList" element={<PostsList list={posts} onDeletePosts={handleDeletePosts} />} />
         </Route>
@@ -90,8 +90,3 @@ function App() {
 
 export default App;
 
-
-// Ask Jenkins:
-// card style from project with white border
-// when to use useNavigate vs Link
-// disabled button boolean returning a number

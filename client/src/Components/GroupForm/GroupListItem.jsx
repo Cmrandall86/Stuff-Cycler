@@ -9,7 +9,7 @@ const GroupListItem = ({ group, onDeleteGroups }) => {
   return (
     <div>
       <li key={group.index}>
-        {`${group.groupName} has ${group.friends.length} friends `}
+        {group.groupName}
 
         <ButtonComponent
           text={"Edit"}
