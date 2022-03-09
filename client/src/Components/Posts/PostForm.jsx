@@ -11,16 +11,30 @@ import { useNavigate } from "react-router-dom";
 const PostForm = () => {
   const [post, setPost] = useState({ title: "", description: "" });
   const [list, setList] = useState([]);
-  const [selectedGroups, setSelectedGroups] = useState(
-    new Array(list.length).fill(false)
-  );
+
+  const [selectedGroups, setSelectedGroups] = useState([]);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch("http://localhost:8000/groups")
       .then((response) => response.json())
-      .then((data) => setList(data))
+      .then((data) =>{
+        setList(data)
+        setSelectedGroups(new Array(data.length).fill(false))
+      })
       .catch((error) => console.log(error));
   }, []);
+
+
+  const selectedGroupData = selectedGroups
+  .map((isSelected, index) => {
+    if (isSelected === true) {
+      return list[index].id;
+    }
+    return false;
+  })
+  .filter((data) => data !== false);
 
   const handleSelectGroup = (position) => {
     const updatedCheckedState = selectedGroups.map((item, index) =>
@@ -29,8 +43,6 @@ const PostForm = () => {
 
     setSelectedGroups(updatedCheckedState);
   };
-
-  const navigate = useNavigate();
 
   const handleSetPost = (e, i) => {
     const nameValue = e.target.value;
@@ -42,25 +54,20 @@ const PostForm = () => {
     });
   };
 
-  const selectedGroupData = selectedGroups
-    .map((isSelected, index) => {
-      if (isSelected === true) {
-        return list[index].id;
-      }
-      return false;
-    })
-    .filter((data) => data !== false);
-
-  //Is this the function where we fetch and post?  
-
-  const onSubmitPosts = () => {
-    fetch("http://localhost:8000/groups" , {method: "POST"}).then(console.log(post))
-  }
+  const onSubmitPosts = (post) => {
+    fetch(`http://localhost:8000/posts`, {
+      method: "POST",
+      body: JSON.stringify(post),
+      headers: { "Content-Type": "application/json" },
+    }).then((response) => {
+      console.log(post);
+    });
+  };
 
   function handleSubmitPost(e) {
     e.preventDefault();
     onSubmitPosts({ ...post, groups: selectedGroupData });
-    navigate("/PostsList");
+    // navigate("/PostsList");
   }
 
   return (
@@ -70,7 +77,7 @@ const PostForm = () => {
           <h2 className="form_start_title">Share Your Stuff!</h2>
           <div className="PostForm">
             <form onSubmit={handleSubmitPost}>
-              <Input
+              {/* <Input
                 className={"input"}
                 Name={"id"}
                 Placeholder={"Item ID"}
@@ -81,7 +88,7 @@ const PostForm = () => {
                 onChange={(e, i) => {
                   handleSetPost(e, i);
                 }}
-              />
+              /> */}
               <Input
                 className={"input"}
                 Name={"title"}
@@ -106,11 +113,13 @@ const PostForm = () => {
                 }}
               />
 
-              <PostGroups
+             {selectedGroups.length && <PostGroups
                 list={list}
                 handleSelectGroup={handleSelectGroup}
                 selectedGroups={selectedGroups}
-              />
+              />}
+              
+
               <ButtonComponent
                 className={"post_button"}
                 text="Share Item"

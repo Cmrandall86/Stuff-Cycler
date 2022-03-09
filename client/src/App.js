@@ -77,8 +77,8 @@ function App() {
           <Route path="/GroupsList" element={<GroupsList onDeleteGroups={handleDeleteGroups} />} />
           <Route path="*" element={<PageNotFound/>}/>
           <Route path="/PostForm" element={ <PostForm onSubmitPosts={handleSetPosts}/> }    />
-          <Route path="/PostForm/:id/edit"  element={<EditPostForm selectPost={selectPost} onSubmitPosts={handleUpdatePost} />  } />
-          <Route path="/PostsList" element={<PostsList list={posts} onDeletePosts={handleDeletePosts} />} />
+          <Route path="/PostForm/:id/edit"  element={<EditPostForm/>  } />
+          <Route path="/PostsList" element={<PostsList onDeletePosts={handleDeletePosts} />} />
         </Route>
 
 

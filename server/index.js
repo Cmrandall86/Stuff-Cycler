@@ -1,10 +1,13 @@
 const express = require("express");
-const db = require("./db");
-
 const app = express();
 const port = 8000;
+
+const bodyParser = require("body-parser");
 const cors = require("cors");
+
+const db = require("./db");
 app.use(cors());
+app.use(bodyParser.json());
 
 const groups = [
   {
@@ -43,62 +46,97 @@ app.get("/groups", (req, res) => {
 });
 
 app.get("/groups/:id", (req, res) => {
-  db.get(`SELECT * from groups WHERE id = ${req.params.id} ` , (err, group) => {
+  db.get(`SELECT * from groups WHERE id = ${req.params.id} `, (err, group) => {
     if (err) {
-      res.send(console.log(err))
+      res.send(console.log(err));
     }
-    res.send(group)
-  })
+    res.send(group);
+  });
 });
 
-//Foreign key constraint turned off because it wont work with it on. 
+//Foreign key constraint turned off because it wont work with it on.
 //need to refresh page after delete endpoint is hit to refresh the list without the deleted group
 app.delete("/groups/:id/delete", (req, res) => {
   db.run(`DELETE FROM groups WHERE id = ${req.params.id}`, (err, group) => {
-    if(err) {
-      res.send(console.log(err))
+    if (err) {
+      res.send(console.log(err));
     }
-    res.send(console.log(req.body))
-  })
+    res.send(console.log(req.body));
+  });
 
   res.send(console.log(req.params));
 });
 
-app.post("/groups", (req, res) => {
-  res.send(console.log(req.body))
-})
+app.post("/posts", (req, res) => {
+  db.run(
+    `INSERT INTO posts (title, description) VALUES (?,?)`,
+    [req.body.title, req.body.description],
+    function (err, post) {
+      if (err) {
+        res.send(console.log(err));
+      }
+
+      const stmt = db.prepare(
+        `INSERT INTO post_groups (postID, groupID) VALUES (?,?)`
+      );
+
+      req.body.groups.forEach((groupID) => {
+        stmt.run([this.lastID, groupID]);
+      });
+
+      stmt.finalize();
+
+      res.send(console.log(this, err, post));
+    }
+  );
+
+  console.log(req.body);
+
+  // res.send(console.log(req.body));
+});
 
 app.get("/posts", (req, res) => {
   db.all("SELECT * FROM posts", (err, posts) => {
     if (err) {
-      res.send(console.log(err))
+      res.send(console.log(err));
     }
-    res.send(JSON.stringify(posts))
-  })
+    res.send(JSON.stringify(posts));
+  });
 });
 
-app.get("/posts/:id", (req, res) => {
-  app.get(`SELECT * FROM posts WHERE id = ${req.params.id}` , (err, post) => {
-    if (err) {
-      res.send(console.log(err))
-    }
-    res.send(JSON.stringify(post))
-  })
+//throw an error if post isnt found
 
+app.get("/posts/:id", (req, res) => {
+  console.log(req.params.id);
+  db.get(`SELECT * FROM posts WHERE id = ${req.params.id}`, (err, post) => {
+    db.all(
+      `SELECT * FROM post_groups WHERE postID = ${req.params.id}`,
+      (err, groupIDs) => {
+        if (err) {
+          res.send(console.log(err));
+        }
+
+        post.groups = groupIDs.map((row) => row.groupID);
+        res.send(JSON.stringify(post));
+      }
+    );
+    if (err) {
+      res.send(console.log(err));
+    }
+
+
+  });
 });
 
 app.delete("/posts/:id/delete", (req, res) => {
   db.run(`DELETE FROM posts WHERE id = ${req.params.id}`, (err, post) => {
-    if(err) {
-      res.send(console.log(err))
+    if (err) {
+      res.send(console.log(err));
     }
-    res.send(console.log(req.body))
-  })
-
+    res.send(console.log(req.body));
+  });
   res.send(console.log(req.params));
 });
-
-
 
 app.listen(port, () => {
   console.log(`Server is up and running on ${port}`);
