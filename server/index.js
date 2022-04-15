@@ -90,9 +90,7 @@ app.post("/posts", (req, res) => {
     }
   );
 
-  console.log(req.body);
 
-  // res.send(console.log(req.body));
 });
 
 app.get("/posts", (req, res) => {

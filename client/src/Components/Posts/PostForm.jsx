@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 const PostForm = () => {
   const [post, setPost] = useState({ title: "", description: "" });
-  const [list, setList] = useState([]);
+  const [groupsList, setGroupsList] = useState([]);
 
   const [selectedGroups, setSelectedGroups] = useState([]);
 
@@ -20,17 +20,18 @@ const PostForm = () => {
     fetch("http://localhost:8000/groups")
       .then((response) => response.json())
       .then((data) =>{
-        setList(data)
+        setGroupsList(data)
         setSelectedGroups(new Array(data.length).fill(false))
       })
       .catch((error) => console.log(error));
   }, []);
 
+  // console.log(groupsList)
 
   const selectedGroupData = selectedGroups
   .map((isSelected, index) => {
     if (isSelected === true) {
-      return list[index].id;
+      return groupsList[index].id;
     }
     return false;
   })
@@ -60,7 +61,7 @@ const PostForm = () => {
       body: JSON.stringify(post),
       headers: { "Content-Type": "application/json" },
     }).then((response) => {
-      console.log(post);
+      console.log("this", post);
     });
   };
 
@@ -70,6 +71,7 @@ const PostForm = () => {
     // navigate("/PostsList");
   }
 
+console.log(post)
   return (
     <Card
       element={
@@ -77,18 +79,6 @@ const PostForm = () => {
           <h2 className="form_start_title">Share Your Stuff!</h2>
           <div className="PostForm">
             <form onSubmit={handleSubmitPost}>
-              {/* <Input
-                className={"input"}
-                Name={"id"}
-                Placeholder={"Item ID"}
-                Type={"text"}
-                Value={post.id}
-                rows={1}
-                Label={"Item ID: "}
-                onChange={(e, i) => {
-                  handleSetPost(e, i);
-                }}
-              /> */}
               <Input
                 className={"input"}
                 Name={"title"}
@@ -114,7 +104,7 @@ const PostForm = () => {
               />
 
              {selectedGroups.length && <PostGroups
-                list={list}
+                groupsList={groupsList}
                 handleSelectGroup={handleSelectGroup}
                 selectedGroups={selectedGroups}
               />}

@@ -4,44 +4,31 @@ import ButtonComponent from "../Button";
 import Input from "../Input"
 import {useNavigate , useParams} from "react-router-dom";
 import Card from "../Card";
-import PostGroups from "./PostGroups"
+import EditPostGroups from "./EditPost/EditPostGroups"
 
-function EditPostForm(props) {
+function EditPostForm({onSubmitPosts}) {
   const [post, setPost] = useState({
-     title: "", description: "", 
-
-    isEditing: false,
+     title: "", description: "", isEditing: false, groups: []
   });
-  const [list, setList] = useState([]);
 
-  const [selectedGroups, setSelectedGroups] = useState([]);
+  const [groupsList, setGroupsList] = useState([]);
+
+  const handleSelectGroup = (id) => {
+    let newGroupArray = post.groups.includes(id) ? post.groups.filter(groupId => groupId !== id ) : [...post.groups, id]
+    setPost({
+      ...post,
+      groups: newGroupArray
+    })
+  }
 
   useEffect(() => {
     fetch("http://localhost:8000/groups")
       .then((response) => response.json())
       .then((data) =>{
-        setList(data)
-        setSelectedGroups(new Array(data.length).fill(false))
+        setGroupsList(data)
       })
       .catch((error) => console.log(error));
   }, []);
-
-  // const selectedGroupData = selectedGroups
-  // .map((isSelected, index) => {
-  //   if (isSelected === true) {
-  //     return list[index].id;
-  //   }
-  //   return false;
-  // })
-  // .filter((data) => data !== false);
-
-  // const handleSelectGroup = (position) => {
-  //   const updatedCheckedState = selectedGroups.map((item, index) =>
-  //     index === position ? !item : item
-  //   );
-
-  //   setSelectedGroups(updatedCheckedState);
-  // };
 
 
   let params = useParams();
@@ -53,7 +40,6 @@ function EditPostForm(props) {
       .then((data) => setPost(data));
   }, []);
 
-  console.log(post)
 
   let navigate = useNavigate()
 
@@ -67,21 +53,10 @@ function EditPostForm(props) {
     });
   };
 
-  // const onSubmitPosts = (post) => {
-  //   fetch(`http://localhost:8000/posts`, {
-  //     method: "POST",
-  //     body: JSON.stringify(post),
-  //     headers: { "Content-Type": "application/json" },
-  //   }).then((response) => {
-  //     console.log(post);
-  //   });
-  // };
-
-
 
   function handleSubmitPost(e) {
     e.preventDefault();
-    props.onSubmitPosts(...post);
+    onSubmitPosts(...post);
     navigate( "/PostsList")
 
   }
@@ -102,6 +77,7 @@ function EditPostForm(props) {
             handleSetPost(e, i);
           }}
         />
+
         <Input
           className={"input"}
           Name={"description"}
@@ -114,6 +90,7 @@ function EditPostForm(props) {
             handleSetPost(e, i);
           }}
         />
+
         <ButtonComponent
           className={"post_button"}
           text="Share Item"
@@ -121,12 +98,12 @@ function EditPostForm(props) {
           disabled={false}
         />
 
-          {selectedGroups.length && <PostGroups
-                list={list}
-                // handleSelectGroup={handleSelectGroup}
-                selectedGroups={selectedGroups}
-              />}
-              
+        <EditPostGroups
+          groupsList={groupsList}
+          post={post}
+          handleSelectGroup={handleSelectGroup}
+        />
+          
       </form>
     </div>
   </div> }/>
