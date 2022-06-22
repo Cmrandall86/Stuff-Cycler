@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../../CSS/GroupForm.css";
 import FriendForm from "./FriendForm";
 import ButtonComponent from "../Button";
@@ -6,39 +6,51 @@ import Input from "../Input";
 import { Outlet, useParams, useNavigate } from "react-router-dom";
 import Card from "../Card";
 import FriendsList from "./FriendsList";
+import styled from 'styled-components'
+import { supabase } from "../../supabaseClient";
 
 function GroupForm(props) {
   const [group, setGroup] = useState({
     groupName: "",
     friends: [],
-    isEditing: false
   });
 
-  // [
-  //   { firstName: "Chris", lastName: "Randall", isEditing: false },
-  //   { firstName: "Evan", lastName: "McJiggity", isEditing: false },
-  // ],
-  
-
-  let params = useParams();
-  let navigate = useNavigate();
-
   //#region GroupForm Handler Functions
+
+  useEffect(
+  ()=>{
+
+    const fetchFriends = async () => {
+    const { data, error } = await supabase
+      .from('profile_friends')
+      .select(`
+        id,
+        friend:friend_id ( username )
+      `)
+      .eq('profile_id', supabase.auth.user().id)
+  }
+
+    fetchFriends()
+
+  },[]
+  )
+
 
   function handleSetGroupName(e) {
     const groupName = e.target.value;
     setGroup({ ...group, groupName });
   }
 
-  function handleSetFriends(friend) {
-    setGroup({ ...group, friends: [...group.friends, friend] });
-  }
+
+
 
   function handleSubmitGroup(e) {
     e.preventDefault();
-    props.onSubmitGroups(group);
-    navigate('/GroupsList')
+
   }
+
+
+  
   //#endregion
 
 
@@ -67,7 +79,6 @@ function GroupForm(props) {
               />{" "}
               {/* this evaluates to 0 if true */}
             </form>
-            <FriendForm onSubmitFriend={handleSetFriends} />
           </div>
         }
       />
@@ -75,7 +86,7 @@ function GroupForm(props) {
       {
         //#endregion
       }
-      <Card element={  <FriendsList group ={group} setGroup={setGroup} />
+      <Card element={  <FriendsList group={group} setGroup={setGroup} />
  }/>
      
 
@@ -85,3 +96,5 @@ function GroupForm(props) {
 }
 
 export default GroupForm;
+
+

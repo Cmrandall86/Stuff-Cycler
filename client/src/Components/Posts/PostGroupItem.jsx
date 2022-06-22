@@ -2,7 +2,6 @@ import "@fontsource/roboto/300.css";
 import Checkbox from "@mui/material/Checkbox";
 
 const PostGroupItem = ({ group, handleSelectGroup, selectedGroups, index }) => {
-  console.log(selectedGroups[index])
   return (
       <li className="PostGroupItem">
         <Checkbox

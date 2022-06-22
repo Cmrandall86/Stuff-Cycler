@@ -13,8 +13,22 @@ import PostForm from "./Components/Posts/PostForm";
 import PostsList from "./Components/Posts/PostsList";
 import Card from "./Components/Card";
 import EditPostForm from "./Components/Posts/EditPostForm";
+import Auth from "./Auth";
+import Account from "./Account";
+import { supabase } from './supabaseClient'
+
 
 function App() {
+  const [session, setSession] = useState(null)
+  useEffect(() => {
+    setSession(supabase.auth.session())
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+  }, [])
+
+
   const [groups, setGroups] = useState([
 
   ]);
@@ -70,15 +84,22 @@ function App() {
       <Routes>
 
         <Route path="/" element={<RoutesLayout/> }>
-          <Route path="/" index element={<HomePage/>}/>
-          <Route path="/home" index element={ <HomePage/>}/>
-          <Route path="/GroupForm"  element={<GroupForm onSubmitGroups={handleSetGroups} />  } />
-          <Route path="/GroupForm/:id/edit"  element={<EditGroupForm selectGroup={selectGroup} onSubmitGroups={handleUpdateGroup} />  } />
-          <Route path="/GroupsList" element={<GroupsList onDeleteGroups={handleDeleteGroups} />} />
-          <Route path="*" element={<PageNotFound/>}/>
-          <Route path="/PostForm" element={ <PostForm onSubmitPosts={handleSetPosts}/> }    />
-          <Route path="/PostForm/:id/edit"  element={<EditPostForm />  } />
-          <Route path="/PostsList" element={<PostsList onDeletePosts={handleDeletePosts} />} />
+          {!session ? <Route path="/login" element={ <Auth/>}/> : (
+            <>
+              <Route path="/" index element={<HomePage/>}/>
+              <Route path="/home" index element={ <HomePage/>}/>
+              <Route path="/account" element={ <Account session={session}/>}/>
+              <Route path="/GroupForm"  element={<GroupForm onSubmitGroups={handleSetGroups} />  } />
+              <Route path="/GroupForm/:id/edit"  element={<EditGroupForm selectGroup={selectGroup} onSubmitGroups={handleUpdateGroup} />  } />
+              <Route path="/GroupsList" element={<GroupsList onDeleteGroups={handleDeleteGroups} />} />
+              <Route path="*" element={<PageNotFound/>}/>
+              <Route path="/PostForm" element={ <PostForm onSubmitPosts={handleSetPosts}/> }    />
+              <Route path="/PostForm/:id/edit"  element={<EditPostForm />  } />
+              <Route path="/PostsList" element={<PostsList onDeletePosts={handleDeletePosts} />} />
+            </>
+            )
+           } 
+
         </Route>
 
 
@@ -90,3 +111,12 @@ function App() {
 
 export default App;
 
+
+// //chris
+// 56c3f6cc-a394-42aa-92b9-0ba890d517df
+
+// //allie
+// bf3075d4-800e-4757-ab42-1317d7205c04
+
+// //jenkins
+// 077c07a5-4ef8-4a58-9ae7-54c9bcc49adb

@@ -2,26 +2,53 @@ import React from "react";
 import "../../CSS/GroupsList.css";
 import GroupListItem from "./GroupListItem";
 import { useEffect, useState } from "react";
+import { supabase } from "../../supabaseClient";
 
 function GroupsList() {
-  const [list, setList] = useState([]);
+  const [groupNames, setGroupNames] = useState([]);
+
+  const fetchGroups = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("groups")
+        .select("id, groupName");
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      setGroupNames(data);
+    } catch (err) {
+      alert("Something Went Wrong With The Get Request", err);
+    }
+  };
 
   useEffect(() => {
-    fetch("http://localhost:8000/groups")
-      .then((response) => response.json())
-      .then((data) => setList(data))
-      .catch((error) => console.log(error));
+    fetchGroups();
   }, []);
 
-  const onDeleteGroups = (id) =>
-    fetch(`http://localhost:8000/groups/${id}/delete`, { method: "DELETE" })
-      .then((response) => response.json()) // this is where the list will be refreshed
-      .catch((error) => console.log(error));
+  const onDeleteGroups = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from("groups")
+        .delete()
+        .match({ id: id });
+
+      if (error) {
+        throw new Error(error);
+      }
+
+      await fetchGroups();
+
+    } catch (err) {
+      alert("Something Went Wrong While Deleting", err);
+    }
+  };
 
   return (
     <div id="groupsListWrapper">
       <div id="groupsList">
-        {list.map((group, index) => {
+        {groupNames.map((group, index) => {
           return (
             <GroupListItem
               group={group}

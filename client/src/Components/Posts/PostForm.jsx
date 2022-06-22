@@ -71,7 +71,6 @@ const PostForm = () => {
     // navigate("/PostsList");
   }
 
-console.log(post)
   return (
     <Card
       element={

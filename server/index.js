@@ -61,11 +61,23 @@ app.delete("/groups/:id/delete", (req, res) => {
     if (err) {
       res.send(console.log(err));
     }
-    res.send(console.log(req.body));
+    console.log(req.body)
+    res.send(200);
   });
 
-  res.send(console.log(req.params));
 });
+
+app.post("/groups", (req, res) => {
+  db.run(
+    `INSERT INTO groups (groupName) VALUES ("${req.body.groupName}")`,
+    function(err) {
+      if(err) {
+        res.send(console.log(err))
+      }
+      res.status(200).send(`${this.lastID}`)
+    }
+  )
+})
 
 app.post("/posts", (req, res) => {
   db.run(
@@ -89,8 +101,6 @@ app.post("/posts", (req, res) => {
       res.send(console.log(this, err, post));
     }
   );
-
-
 });
 
 app.get("/posts", (req, res) => {
@@ -121,8 +131,6 @@ app.get("/posts/:id", (req, res) => {
     if (err) {
       res.send(console.log(err));
     }
-
-
   });
 });
 
@@ -135,6 +143,8 @@ app.delete("/posts/:id/delete", (req, res) => {
   });
   res.send(console.log(req.params));
 });
+
+
 
 app.listen(port, () => {
   console.log(`Server is up and running on ${port}`);

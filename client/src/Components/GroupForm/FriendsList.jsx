@@ -3,105 +3,55 @@ import PropTypes from "prop-types";
 import Input from "../Input";
 import ButtonComponent from "../Button";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { supabase } from "../../supabaseClient";
+import { useEffect, useState } from "react";
+import Checkbox from "@mui/material/Checkbox";
 
-const FriendsList = ({ group, setGroup }) => {
-  function handleSetEditNames(e, index) {
-    const nameValue = e.target.value;
-    const nameKey = e.target.name;
 
-    setGroup({
-      ...group,
-      friends: [
-        ...group.friends.slice(0, index),
-        { ...group.friends[index], [nameKey]: nameValue },
-        ...group.friends.slice(index + 1),
-      ],
-    });
-  }
+const FriendsList = () => {
+  const [friends, setFriends] = useState([])
+  useEffect(
+    ()=>{
+  
+      const fetchFriends = async () => {
+      const { data, error } = await supabase
+        .from('profile_friends')
+        .select(`
+          id,
+          profile:friend_id ( username )
+        `)
+        .eq('profile_id', supabase.auth.user().id)
+        setFriends(data)
+        console.log(data)
+    }
+  
+      fetchFriends()
+  
+    },[]
+    )
 
-  function setPersonToDisplayMode(i) {
-    const personTarget = group.friends[i];
-    const newfriends = [
-      ...group.friends.slice(0, i),
-      { ...personTarget, isEditing: false },
-      ...group.friends.slice(i + 1),
-    ];
+  const [isChecked, setIsChecked] = useState([true])  
 
-    setGroup({
-      ...group,
-      friends: newfriends,
-    });
-  }
-
-  function handleDeleteName(i) {
-    setGroup({
-      ...group,
-      friends: [...group.friends.slice(0, i), ...group.friends.slice(i + 1)],
-    });
-  }
-
-  function setPersonToEditMode(i) {
-    const personTarget = group.friends[i];
-    const editedFriendsArray = [
-      ...group.friends.slice(0, i),
-      { ...personTarget, isEditing: true },
-      ...group.friends.slice(i + 1),
-    ];
-
-    setGroup({
-      ...group,
-      friends: editedFriendsArray,
-    });
-  }
 
   return (
     <div id="friends_list_wrapper">
       <h2 className="form_start_title">List of Friends</h2>
 
       <ul id="friend_list">
-        {group.friends.map((friend, i) => {
-          if (friend.isEditing) {
-            return (
-              <div className="friend_wrapper">
-                <li key={i}>
-                  <Input
-                    Name={"firstName"}
-                    Placeholder={"First Name"}
-                    Type={"text"}
-                    Value={friend.firstName}
-                    Label={"First Name: "}
-                    onChange={(e) => handleSetEditNames(e, i)}
-                  />
-                  <Input
-                    Name={"lastName"}
-                    Placeholder={"Last Name"}
-                    Type={"text"}
-                    Value={friend.lastName}
-                    Label={"Last Name: "}
-                    onChange={(e) => handleSetEditNames(e, i)}
-                  />
-                  <ButtonComponent
-                    text="Save"
-                    color="#00FFFF"
-                    onClicker={() => setPersonToDisplayMode(i)}
-                  />
-                </li>
-              </div>
-            );
-          }
+        {friends.map((friend, i) => {
 
           return (
             <li key={i}>
-              {friend.firstName} {friend.lastName}
-              <ButtonComponent
-                color="#00FFFF"
-                text="Edit"
-                onClicker={() => setPersonToEditMode(i)}
+              {friend.profile.username}
+              <Checkbox
+              
+              onChange={()=>{setIsChecked([...isChecked , isChecked[i] === true ? false : true])}}
+              checked={isChecked[i]}
               />
               <ButtonComponent
                 text="Delete"
                 color="red"
-                onClicker={() => handleDeleteName(i)}
+                onClicker={() => {}}
                 startIcon={<DeleteIcon />}
               />
             </li>
