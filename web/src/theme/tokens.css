@@ -1,0 +1,11 @@
+:root {
+  --bg: #0b0d0e;        /* base-900 */
+  --panel: #121416;     /* base-800 */
+  --panel-2: #1a1d1f;   /* base-700 */
+  --text: #cfd3d6;      /* ink-400 */
+  --muted: #8a9094;     /* ink-600 */
+  --accent: #49be8b;    /* mint-400 */
+  --accent-strong: #23835c; /* mint-600 */
+  --radius: 1.25rem;    /* 2xl */
+}
+
