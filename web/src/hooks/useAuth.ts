@@ -30,7 +30,10 @@ export function useAuth() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_evt, session) => {
       const u = session?.user ?? null
-      setUser(u)
+      if (mounted) {
+        setUser(u)
+        setLoading(false)
+      }
       if (u) {
         // Bootstrap user in background, don't block auth state
         ensureUserBootstrap(u.id).catch(err => {

@@ -7,7 +7,7 @@
     height: 100%; 
     margin: 0;
     padding: 0;
-  }
+}
   
   body { 
     background: var(--bg); 
@@ -27,13 +27,13 @@
     border: none;
     cursor: pointer;
     transition: all 0.2s;
-  }
-  
+}
+
   .btn-accent { 
     background: var(--accent); 
     color: #000;
-  }
-  
+}
+
   .btn-accent:hover { 
     background: var(--accent-strong); 
   }

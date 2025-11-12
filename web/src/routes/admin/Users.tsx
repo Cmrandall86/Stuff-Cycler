@@ -1,0 +1,539 @@
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabaseClient'
+import AdminGate from '@/components/AdminGate'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
+import Modal from '@/components/ui/Modal'
+import Card from '@/components/ui/Card'
+import Badge from '@/components/ui/Badge'
+
+interface User {
+  id: string
+  email?: string
+  role?: 'member' | 'admin'
+  user_metadata?: {
+    display_name?: string
+  }
+  created_at?: string
+  banned_until?: string
+}
+
+function AdminUsersContent() {
+  const queryClient = useQueryClient()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+
+  const fetchUsers = async () => {
+    const { data: session } = await supabase.auth.getSession()
+    const token = session?.session?.access_token
+    const base = import.meta.env.VITE_SUPABASE_URL
+    const url = new URL(`${base}/functions/v1/admin-users`)
+    url.searchParams.set('page', page.toString())
+    if (searchQuery) url.searchParams.set('query', searchQuery)
+
+    const res = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!res.ok) {
+      if (res.status === 403) throw new Error('Forbidden: Admin access required')
+      throw new Error(`Failed to fetch users: ${res.statusText}`)
+    }
+
+    return res.json()
+  }
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['admin-users', page, searchQuery],
+    queryFn: fetchUsers,
+  })
+
+  const createUserMutation = useMutation({
+    mutationFn: async (payload: {
+      email: string
+      password: string
+      display_name: string
+      role: 'member' | 'admin'
+    }) => {
+      const { data: session } = await supabase.auth.getSession()
+      const token = session?.session?.access_token
+      const base = import.meta.env.VITE_SUPABASE_URL
+
+      const res = await fetch(`${base}/functions/v1/admin-users`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to create user')
+      }
+
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      setCreateModalOpen(false)
+    },
+  })
+
+  const updateUserMutation = useMutation({
+    mutationFn: async (payload: {
+      id: string
+      display_name?: string
+      role?: 'member' | 'admin'
+      password?: string
+    }) => {
+      const { data: session } = await supabase.auth.getSession()
+      const token = session?.session?.access_token
+      const base = import.meta.env.VITE_SUPABASE_URL
+
+      const res = await fetch(`${base}/functions/v1/admin-users/${payload.id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to update user')
+      }
+
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      setEditModalOpen(false)
+      setSelectedUser(null)
+    },
+  })
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async ({ id, hard }: { id: string; hard: boolean }) => {
+      const { data: session } = await supabase.auth.getSession()
+      const token = session?.session?.access_token
+      const base = import.meta.env.VITE_SUPABASE_URL
+
+      const url = new URL(`${base}/functions/v1/admin-users/${id}`)
+      if (hard) url.searchParams.set('hard', 'true')
+
+      const res = await fetch(url.toString(), {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || 'Failed to delete user')
+      }
+
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
+      setDeleteModalOpen(false)
+      setSelectedUser(null)
+    },
+  })
+
+  const users: User[] = data?.users || []
+
+  return (
+    <AdminGate>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-ink-400">User Management</h1>
+          <Button
+            className="btn-accent"
+            onClick={() => setCreateModalOpen(true)}
+          >
+            Create User
+          </Button>
+        </div>
+
+        <Card className="p-4 mb-4">
+          <Input
+            label="Search"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setPage(1)
+            }}
+            placeholder="Search by email or name..."
+          />
+        </Card>
+
+        {isLoading && <div className="text-ink-500">Loading users...</div>}
+        {error && (
+          <div className="text-red-400 mb-4">
+            Error: {error instanceof Error ? error.message : 'Unknown error'}
+          </div>
+        )}
+
+        {!isLoading && !error && (
+          <>
+            <div className="card overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-base-700">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-ink-400 font-semibold">Email</th>
+                    <th className="px-4 py-3 text-left text-ink-400 font-semibold">Name</th>
+                    <th className="px-4 py-3 text-left text-ink-400 font-semibold">Role</th>
+                    <th className="px-4 py-3 text-left text-ink-400 font-semibold">Status</th>
+                    <th className="px-4 py-3 text-left text-ink-400 font-semibold">Created</th>
+                    <th className="px-4 py-3 text-left text-ink-400 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-center text-ink-600">
+                        No users found
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((user) => (
+                      <tr key={user.id} className="border-t border-base-700 hover:bg-base-700/50">
+                        <td className="px-4 py-3 text-ink-400">{user.email || 'N/A'}</td>
+                        <td className="px-4 py-3 text-ink-500">
+                          {user.user_metadata?.display_name || 'N/A'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={user.role === 'admin' ? 'success' : 'default'}>
+                            {user.role || 'member'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={user.banned_until ? 'error' : 'success'}>
+                            {user.banned_until ? 'Banned' : 'Active'}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-ink-600 text-sm">
+                          {user.created_at
+                            ? new Date(user.created_at).toLocaleDateString()
+                            : 'N/A'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedUser(user)
+                                setEditModalOpen(true)
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedUser(user)
+                                setDeleteModalOpen(true)
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-between items-center mt-4">
+              <Button
+                variant="secondary"
+                disabled={page === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-ink-600">Page {page}</span>
+              <Button
+                variant="secondary"
+                disabled={users.length < 20}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Create User Modal */}
+        <CreateUserModal
+          isOpen={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          onSubmit={(data) => createUserMutation.mutate(data)}
+          loading={createUserMutation.isPending}
+        />
+
+        {/* Edit User Modal */}
+        {selectedUser && (
+          <EditUserModal
+            isOpen={editModalOpen}
+            onClose={() => {
+              setEditModalOpen(false)
+              setSelectedUser(null)
+            }}
+            user={selectedUser}
+            onSubmit={(data) =>
+              updateUserMutation.mutate({ id: selectedUser.id, ...data })
+            }
+            loading={updateUserMutation.isPending}
+          />
+        )}
+
+        {/* Delete User Modal */}
+        {selectedUser && (
+          <DeleteUserModal
+            isOpen={deleteModalOpen}
+            onClose={() => {
+              setDeleteModalOpen(false)
+              setSelectedUser(null)
+            }}
+            user={selectedUser}
+            onDelete={(hard) =>
+              deleteUserMutation.mutate({ id: selectedUser.id, hard })
+            }
+            loading={deleteUserMutation.isPending}
+          />
+        )}
+      </div>
+    </AdminGate>
+  )
+}
+
+function CreateUserModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  loading,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (data: {
+    email: string
+    password: string
+    display_name: string
+    role: 'member' | 'admin'
+  }) => void
+  loading: boolean
+}) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [role, setRole] = useState<'member' | 'admin'>('member')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onSubmit({ email, password, display_name: displayName, role })
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Create User">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Input
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <Input
+          label="Display Name"
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+        />
+        <div>
+          <label className="block text-ink-500 mb-2">Role</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'member' | 'admin')}
+            className="w-full px-4 py-2 bg-base-700 border border-base-600 rounded-2xl text-ink-400"
+          >
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" className="btn-accent" disabled={loading}>
+            {loading ? 'Creating...' : 'Create'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+function EditUserModal({
+  isOpen,
+  onClose,
+  user,
+  onSubmit,
+  loading,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  user: User
+  onSubmit: (data: {
+    display_name?: string
+    role?: 'member' | 'admin'
+    password?: string
+  }) => void
+  loading: boolean
+}) {
+  const [displayName, setDisplayName] = useState(
+    user.user_metadata?.display_name || ''
+  )
+  const [role, setRole] = useState<'member' | 'admin'>(user.role || 'member')
+  const [newPassword, setNewPassword] = useState('')
+  const [resetPassword, setResetPassword] = useState(false)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const data: any = { display_name: displayName, role }
+    if (resetPassword && newPassword) {
+      data.password = newPassword
+    }
+    onSubmit(data)
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Edit User">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Display Name"
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+        />
+        <div>
+          <label className="block text-ink-500 mb-2">Role</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value as 'member' | 'admin')}
+            className="w-full px-4 py-2 bg-base-700 border border-base-600 rounded-2xl text-ink-400"
+          >
+            <option value="member">Member</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <div>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={resetPassword}
+              onChange={(e) => setResetPassword(e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-ink-500">Reset Password</span>
+          </label>
+          {resetPassword && (
+            <Input
+              label="New Password"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="mt-2"
+            />
+          )}
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" className="btn-accent" disabled={loading}>
+            {loading ? 'Updating...' : 'Update'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+function DeleteUserModal({
+  isOpen,
+  onClose,
+  user,
+  onDelete,
+  loading,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  user: User
+  onDelete: (hard: boolean) => void
+  loading: boolean
+}) {
+  const [hardDelete, setHardDelete] = useState(false)
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Delete User">
+      <div className="space-y-4">
+        <p className="text-ink-500">
+          Are you sure you want to {hardDelete ? 'permanently delete' : 'disable'}{' '}
+          <strong>{user.email}</strong>?
+        </p>
+        <div>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={hardDelete}
+              onChange={(e) => setHardDelete(e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-ink-500">Permanently delete (cannot be undone)</span>
+          </label>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => onDelete(hardDelete)}
+            disabled={loading}
+            className="text-red-400 hover:text-red-300"
+          >
+            {loading ? 'Deleting...' : hardDelete ? 'Delete Permanently' : 'Disable'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+export default AdminUsersContent
+

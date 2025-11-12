@@ -5,6 +5,7 @@ alter table item_photos enable row level security;
 alter table item_visibility enable row level security;
 alter table interests enable row level security;
 alter table reservations enable row level security;
+alter table profiles enable row level security;
 
 -- Groups
 create policy "group readable if member or owner" on groups
@@ -143,4 +144,25 @@ for all using (
 ) with check (
   EXISTS (select 1 from items i where i.id = reservations.item_id and i.owner_id = auth.uid())
 );
+
+-- Profiles
+-- anyone can read minimal profile info (ok for MVP)
+drop policy if exists "profiles read limited" on profiles;
+create policy "profiles read limited"
+on profiles for select
+using ( true );
+
+-- users can update only their own profile (not role - blocked by trigger)
+drop policy if exists "profiles upsert self" on profiles;
+create policy "profiles upsert self"
+on profiles for update
+using ( auth.uid() = id )
+with check ( auth.uid() = id );
+
+-- admins can do anything on profiles (including role changes)
+drop policy if exists "profiles admin all" on profiles;
+create policy "profiles admin all"
+on profiles for all
+using ( exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin') )
+with check ( exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin') );
 

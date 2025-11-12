@@ -73,3 +73,63 @@ create index if not exists idx_item_status on items(status);
 create index if not exists idx_interests_item on interests(item_id);
 create index if not exists idx_reservations_item on reservations(item_id);
 
+-- PROFILES
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text,
+  role text not null default 'member' check (role in ('member','admin')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_profiles_role on profiles(role);
+
+-- helper: are we admin?
+create or replace function public.is_admin(uid uuid)
+returns boolean language sql stable as $$
+  select exists (select 1 from profiles p where p.id = uid and p.role = 'admin')
+$$;
+
+-- block role changes by non-admins
+create or replace function public.profiles_guard_role()
+returns trigger language plpgsql as $$
+begin
+  if TG_OP = 'UPDATE' and new.role is distinct from old.role then
+    if not public.is_admin(auth.uid()) then
+      raise exception 'Only admins can change roles';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_profiles_guard_role on profiles;
+create trigger trg_profiles_guard_role
+before update on profiles
+for each row execute function public.profiles_guard_role();
+
+-- Auto-create profile for new users
+create or replace function public.handle_new_user()
+returns trigger as $$
+declare
+  dn text := coalesce(
+    nullif(new.raw_user_meta_data->>'display_name', ''),
+    nullif(new.raw_user_meta_data->>'name', ''),
+    nullif(new.raw_user_meta_data->>'full_name', ''),
+    nullif(new.raw_user_meta_data->>'user_name', ''),
+    null
+  );
+begin
+  insert into public.profiles (id, display_name)
+  values (new.id, dn)
+  on conflict (id) do update
+  set display_name = coalesce(excluded.display_name, profiles.display_name);
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+

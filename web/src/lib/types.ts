@@ -58,3 +58,11 @@ export interface Reservation {
   status: string
 }
 
+export interface Profile {
+  id: string
+  display_name?: string
+  role: 'member' | 'admin'
+  created_at: string
+  updated_at: string
+}
+
