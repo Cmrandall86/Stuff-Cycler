@@ -8,34 +8,60 @@ alter table reservations enable row level security;
 alter table profiles enable row level security;
 
 -- Groups
-create policy "group readable if member or owner" on groups
-for select using (
-  owner_id = auth.uid() OR EXISTS (
-    select 1 from group_members gm where gm.group_id = groups.id and gm.user_id = auth.uid()
+drop policy if exists "group readable if member or owner" on groups;
+drop policy if exists "group insert" on groups;
+drop policy if exists "group update by owner" on groups;
+drop policy if exists "groups: read mine" on groups;
+drop policy if exists "groups: insert self owner" on groups;
+drop policy if exists "groups: owner write" on groups;
+drop policy if exists "groups: owner delete" on groups;
+
+create policy "groups: read mine"
+on groups for select
+using (
+  owner_id = auth.uid()
+  or exists (
+    select 1 from group_members gm
+    where gm.group_id = groups.id and gm.user_id = auth.uid()
   )
 );
-create policy "group insert" on groups
-for insert with check ( auth.uid() = owner_id );
-create policy "group update by owner" on groups
-for update using ( auth.uid() = owner_id );
+
+create policy "groups: insert self owner"
+on groups for insert
+with check ( owner_id = auth.uid() );
+
+create policy "groups: owner write"
+on groups for update using (owner_id = auth.uid())
+with check (owner_id = auth.uid());
+
+create policy "groups: owner delete"
+on groups for delete using (owner_id = auth.uid());
 
 -- Group members
-create policy "gm select if self or same group" on group_members
-for select using (
-  user_id = auth.uid() OR EXISTS (
-    select 1 from group_members gm2 where gm2.group_id = group_members.group_id and gm2.user_id = auth.uid()
-  )
+drop policy if exists "gm select if self or same group" on group_members;
+drop policy if exists "gm insert by group member" on group_members;
+drop policy if exists "gm delete by owner or self" on group_members;
+drop policy if exists "group_members: read mine" on group_members;
+drop policy if exists "group_members: owner can insert" on group_members;
+drop policy if exists "group_members: owner can delete" on group_members;
+
+create policy "group_members: read mine"
+on group_members for select
+using (
+  user_id = auth.uid()
+  or exists (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid())
 );
-create policy "gm insert by group member" on group_members
-for insert with check (
-  EXISTS (
-    select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid()
-  ) OR auth.uid() = user_id -- self-join via invite code
+
+create policy "group_members: owner can insert"
+on group_members for insert
+with check (
+  exists (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid())
 );
-create policy "gm delete by owner or self" on group_members
-for delete using (
-  EXISTS (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid())
-  OR auth.uid() = user_id
+
+create policy "group_members: owner can delete"
+on group_members for delete
+using (
+  exists (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid())
 );
 
 -- Items (core visibility rule)

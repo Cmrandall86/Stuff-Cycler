@@ -8,6 +8,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Prevent accidental imports of Edge Functions
+      'supabase/functions': '/dev/null',
+    },
+  },
+  server: {
+    fs: {
+      // Don't serve files outside of web directory
+      allow: ['.'],
     },
   },
 })

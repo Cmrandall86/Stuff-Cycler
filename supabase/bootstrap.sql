@@ -77,10 +77,14 @@ create index if not exists idx_reservations_item on reservations(item_id);
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_name text,
+  avatar_url text,
   role text not null default 'member' check (role in ('member','admin')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Add avatar_url column if it doesn't exist (for existing tables)
+alter table profiles add column if not exists avatar_url text;
 
 create index if not exists idx_profiles_role on profiles(role);
 
@@ -110,26 +114,64 @@ for each row execute function public.profiles_guard_role();
 
 -- Auto-create profile for new users
 create or replace function public.handle_new_user()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 declare
+  -- try various keys providers use
   dn text := coalesce(
-    nullif(new.raw_user_meta_data->>'display_name', ''),
-    nullif(new.raw_user_meta_data->>'name', ''),
-    nullif(new.raw_user_meta_data->>'full_name', ''),
-    nullif(new.raw_user_meta_data->>'user_name', ''),
+    new.raw_user_meta_data->>'display_name',
+    new.raw_user_meta_data->>'name',
+    new.raw_user_meta_data->>'full_name',
+    new.raw_user_meta_data->>'user_name',
     null
   );
+  pic text := coalesce(
+    new.raw_user_meta_data->>'avatar_url',
+    new.raw_user_meta_data->>'picture',      -- Google/Discord
+    null
+  );
+  email_local text := split_part(new.email, '@', 1);
 begin
-  insert into public.profiles (id, display_name)
-  values (new.id, dn)
-  on conflict (id) do update
-  set display_name = coalesce(excluded.display_name, profiles.display_name);
+  if dn is null or btrim(dn) = '' then
+    -- simple "nice" fallback from email local-part
+    dn := initcap(regexp_replace(email_local, '[_\.\-]+', ' ', 'g'));
+  end if;
+
+  insert into public.profiles (id, display_name, avatar_url)
+  values (new.id, dn, pic)
+  on conflict (id) do nothing;
+
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
+
+-- Helper view for current user role
+create or replace view my_role as
+select role from profiles where id = auth.uid();
+
+-- RPC function for getting current user role (returns text directly)
+create or replace function public.get_my_role()
+returns text
+language sql
+security definer
+stable
+as $$
+  select role::text from profiles where id = auth.uid();
+$$;
+
+-- Grant execute permission
+grant execute on function public.get_my_role() to anon, authenticated;
+
+-- Ensure profiles.role exists with proper constraint (idempotent)
+alter table profiles
+  add column if not exists role text not null default 'member'
+  check (role in ('member','admin'));
 

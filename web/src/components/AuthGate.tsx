@@ -1,11 +1,7 @@
 import { Navigate } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/useAuth'
 
-interface AuthGateProps {
-  children: React.ReactNode
-}
-
-export default function AuthGate({ children }: AuthGateProps) {
+export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
 
   if (loading) return null

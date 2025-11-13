@@ -9,6 +9,7 @@
 1. Clone this repo.
 2. Copy `.env.local.example` to `web/.env.local` and fill values.
 3. In Supabase SQL editor, run the contents of `supabase/bootstrap.sql` then `supabase/rls-policies.sql`.
+   - If you have existing profiles, also run `supabase/backfill-profiles.sql` to populate display_name and avatar_url for existing users.
 4. In Supabase **Storage**, create bucket `images` (public = false). Add an **Anon** upload policy for authenticated users via signed URLs.
 5. Configure authentication providers in Supabase Dashboard:
    - Go to **Authentication → Providers**

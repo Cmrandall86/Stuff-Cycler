@@ -2,12 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/hooks/useAuth'
-import AuthGate from './AuthGate'
 import ImageUploader from '@/components/ImageUploader'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 
-function NewItemForm() {
+export default function NewItem() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [title, setTitle] = useState('')
@@ -105,11 +104,4 @@ function NewItemForm() {
   )
 }
 
-export default function NewItem() {
-  return (
-    <AuthGate>
-      <NewItemForm />
-    </AuthGate>
-  )
-}
 

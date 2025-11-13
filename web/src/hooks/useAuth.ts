@@ -1,50 +1,63 @@
-import { useEffect, useState } from 'react'
-
-import { supabase } from '@/lib/supabaseClient'
-
+// src/hooks/useAuth.ts
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-
+import { supabase } from '@/lib/supabaseClient'
 import { ensureUserBootstrap } from '@/lib/bootstrapUser'
 
-export function useAuth() {
+// Optional: console helper in the browser
+if (typeof window !== 'undefined') (window as any).supabase = supabase
+
+type AuthContextValue = {
+  user: User | null
+  loading: boolean
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
 
+    // 1) Prime from current session
     ;(async () => {
-      const { data } = await supabase.auth.getUser()
-      const u = data.user ?? null
-      if (mounted) {
-        setUser(u)
-        setLoading(false)
-      }
-      if (u) {
-        // Bootstrap user in background, don't block auth state
-        ensureUserBootstrap(u.id).catch(err => {
-          console.error('Bootstrap error:', err)
-        })
+      const { data } = await supabase.auth.getSession()
+      const u = data.session?.user ?? null
+      if (!mounted) return
+      setUser(u)
+      setLoading(false)
+      if (u?.id) {
+        // Bootstrap user in background, don't block UI
+        ensureUserBootstrap(u.id).catch(err => console.error('Bootstrap error:', err))
       }
     })()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_evt, session) => {
+    // 2) Subscribe to auth changes
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
       const u = session?.user ?? null
-      if (mounted) {
-        setUser(u)
-        setLoading(false)
-      }
-      if (u) {
-        // Bootstrap user in background, don't block auth state
-        ensureUserBootstrap(u.id).catch(err => {
-          console.error('Bootstrap error:', err)
-        })
+      if (!mounted) return
+      setUser(u)
+      setLoading(false)
+      if (u?.id) {
+        ensureUserBootstrap(u.id).catch(err => console.error('Bootstrap error:', err))
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      sub?.subscription?.unsubscribe()
+    }
   }, [])
 
-  return { user, loading }
+  const value = useMemo(() => ({ user, loading }), [user, loading])
+
+  return React.createElement(AuthContext.Provider, { value }, children)
 }
 
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within an AuthProvider')
+  return ctx
+}

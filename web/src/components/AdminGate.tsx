@@ -1,25 +1,19 @@
+// src/components/AdminGate.tsx
 import { Navigate } from '@tanstack/react-router'
+import { useAuth } from '@/hooks/useAuth'
 import { useRole } from '@/hooks/useRole'
 
-interface AdminGateProps {
-  children: React.ReactNode
-}
+export default function AdminGate({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  const { data: role, isLoading, isFetched } = useRole()
 
-export default function AdminGate({ children }: AdminGateProps) {
-  const { data: role, isLoading } = useRole()
+  // Wait for auth OR role to resolve
+  if (loading || isLoading || (!isFetched && user)) return null
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-ink-500">Loading...</div>
-      </div>
-    )
-  }
-
+  if (!user) return <Navigate to="/signin" />
   if (role !== 'admin') {
+    console.debug('AdminGate: redirecting to / because role is not admin', { role })
     return <Navigate to="/" />
   }
-
   return <>{children}</>
 }
-

@@ -1,9 +1,8 @@
 import { useGroups } from '@/hooks/useGroups'
-import AuthGate from './AuthGate'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 
-function GroupsContent() {
+export default function Groups() {
   const { data: groups, isLoading, error } = useGroups()
 
   if (isLoading) {
@@ -41,14 +40,6 @@ function GroupsContent() {
         </div>
       )}
     </div>
-  )
-}
-
-export default function Groups() {
-  return (
-    <AuthGate>
-      <GroupsContent />
-    </AuthGate>
   )
 }
 
