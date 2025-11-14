@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { useAuth } from '@/hooks/useAuth'
 import { useRole } from '@/hooks/useRole'
 
@@ -7,20 +7,66 @@ export default function Navbar() {
   const { user } = useAuth()
   const { data: role, isLoading, error } = useRole()
   const isAdmin = role === 'admin' // role only loads when user exists, so no need for !!user check
+  const router = useRouterState()
+  const currentPath = router.location.pathname
 
   // Debug logging (remove after fixing)
   console.log('Navbar role debug', { user: !!user, role, isLoading, error, isAdmin })
 
+  // Helper function to check if a path is active
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return currentPath === '/'
+    }
+    return currentPath.startsWith(path)
+  }
+
   return (
     <div className="sticky top-0 z-10 border-b border-base-700 bg-base-800/80 backdrop-blur">
-      <div className="max-w-6xl mx-auto flex items-center justify-between p-3">
-        <Link to="/" className="font-semibold text-mint-400">Stuff Cycler</Link>
+      <div className="container mx-auto flex items-center justify-between p-3">
+        <Link 
+          to="/" 
+          className={`font-semibold ${isActive('/') ? 'text-mint-400' : 'text-mint-400/70 hover:text-mint-400'}`}
+        >
+          Stuff Cycler
+        </Link>
         <div className="flex items-center gap-3">
-          {user && <Link to="/groups" className="text-ink-600 hover:text-ink-400">Groups</Link>}
-          {isAdmin && <Link to="/admin/users" className="text-ink-600 hover:text-ink-400">Admin</Link>}
+          {user && (
+            <Link 
+              to="/groups" 
+              className={`transition-colors ${
+                isActive('/groups') 
+                  ? 'text-mint-400 font-medium' 
+                  : 'text-ink-600 hover:text-ink-400'
+              }`}
+            >
+              Groups
+            </Link>
+          )}
+          {isAdmin && (
+            <Link 
+              to="/admin/users" 
+              className={`transition-colors ${
+                isActive('/admin/users') 
+                  ? 'text-mint-400 font-medium' 
+                  : 'text-ink-600 hover:text-ink-400'
+              }`}
+            >
+              Admin
+            </Link>
+          )}
           {user ? (
             <>
-              <Link to="/new" className="btn btn-accent px-3 py-1.5">New Item</Link>
+              <Link 
+                to="/new" 
+                className={`btn px-3 py-1.5 transition-colors ${
+                  isActive('/new') 
+                    ? 'btn-accent ring-2 ring-mint-400/50' 
+                    : 'btn-accent'
+                }`}
+              >
+                New Item
+              </Link>
               <button
                 className="px-3 py-1.5 rounded-2xl border border-base-600 hover:bg-base-700 text-ink-400"
                 onClick={() => supabase.auth.signOut()}
@@ -30,8 +76,24 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/signin" className="btn btn-accent px-3 py-1.5">Sign in</Link>
-              <Link to="/signup" className="px-3 py-1.5 rounded-2xl border border-base-600 hover:bg-base-700 text-ink-400">
+              <Link 
+                to="/signin" 
+                className={`btn px-3 py-1.5 transition-colors ${
+                  isActive('/signin') 
+                    ? 'btn-accent ring-2 ring-mint-400/50' 
+                    : 'btn-accent'
+                }`}
+              >
+                Sign in
+              </Link>
+              <Link 
+                to="/signup" 
+                className={`px-3 py-1.5 rounded-2xl border transition-colors ${
+                  isActive('/signup') 
+                    ? 'border-mint-400/50 bg-base-700 text-mint-400' 
+                    : 'border-base-600 hover:bg-base-700 text-ink-400'
+                }`}
+              >
                 Sign up
               </Link>
             </>

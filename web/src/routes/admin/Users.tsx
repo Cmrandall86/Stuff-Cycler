@@ -29,8 +29,14 @@ function AdminUsersContent() {
   const base = import.meta.env.VITE_SUPABASE_URL
   const anon = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+  // Get current user ID for self-demotion check
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  
   async function getToken() {
     const { data: { session } } = await supabase.auth.getSession()
+    if (session?.user?.id && !currentUserId) {
+      setCurrentUserId(session.user.id)
+    }
     return session?.access_token ?? ''
   }
 
@@ -107,6 +113,11 @@ function AdminUsersContent() {
       role?: 'member' | 'admin'
       password?: string
     }) => {
+      // Frontend check to prevent self-demotion
+      if (currentUserId && id === currentUserId && updates.role && updates.role !== 'admin') {
+        throw new Error('Cannot remove your own admin privileges')
+      }
+      
       const token = await getToken()
       const res = await fetch(`${base}/functions/v1/admin-users/${id}`, {
         method: 'PATCH',
@@ -218,7 +229,7 @@ function AdminUsersContent() {
                       </td>
                       <td className="px-4 py-3">
                         <Badge variant={user.role === 'admin' ? 'success' : 'default'}>
-                          {user.role || 'member'}
+                          {user.role?.charAt(0).toUpperCase() + (user.role?.slice(1) || '') || 'MEMBER'}
                         </Badge>
                       </td>
                       <td className="px-4 py-3">
@@ -295,6 +306,7 @@ function AdminUsersContent() {
           user={selectedUser}
           onSubmit={(data) => updateUserMutation.mutate({ id: selectedUser.id, ...data })}
           loading={updateUserMutation.isPending}
+          isCurrentUser={selectedUser.id === currentUserId}
         />
       )}
 
@@ -367,12 +379,14 @@ function EditUserModal({
   user,
   onSubmit,
   loading,
+  isCurrentUser,
 }: {
   isOpen: boolean
   onClose: () => void
   user: User
   onSubmit: (data: { display_name?: string; role?: 'member' | 'admin'; password?: string }) => void
   loading: boolean
+  isCurrentUser: boolean
 }) {
   const [displayName, setDisplayName] = useState(user.display_name || user.user_metadata?.display_name || '')
   const [role, setRole] = useState<'member' | 'admin'>(user.role || 'member')
@@ -386,6 +400,8 @@ function EditUserModal({
     onSubmit(data)
   }
 
+  const isAttemptingSelfDemotion = isCurrentUser && role !== 'admin' && user.role === 'admin'
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit User">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -396,10 +412,16 @@ function EditUserModal({
             value={role}
             onChange={(e) => setRole(e.target.value as 'member' | 'admin')}
             className="w-full px-4 py-2 bg-base-700 border border-base-600 rounded-2xl text-ink-400"
+            disabled={isCurrentUser && user.role === 'admin'}
           >
             <option value="member">Member</option>
             <option value="admin">Admin</option>
           </select>
+          {isCurrentUser && user.role === 'admin' && (
+            <p className="text-xs text-yellow-400 mt-2">
+              ⚠️ You cannot remove your own admin privileges
+            </p>
+          )}
         </div>
         <div>
           <label className="flex items-center gap-2">
@@ -412,7 +434,13 @@ function EditUserModal({
         </div>
         <div className="flex gap-2 justify-end">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button type="submit" className="btn-accent" disabled={loading}>{loading ? 'Updating...' : 'Update'}</Button>
+          <Button 
+            type="submit" 
+            className="btn-accent" 
+            disabled={loading || isAttemptingSelfDemotion}
+          >
+            {loading ? 'Updating...' : 'Update'}
+          </Button>
         </div>
       </form>
     </Modal>

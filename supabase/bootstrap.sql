@@ -94,12 +94,13 @@ returns boolean language sql stable as $$
   select exists (select 1 from profiles p where p.id = uid and p.role = 'admin')
 $$;
 
--- block role changes by non-admins
+-- block role changes by non-admins (but allow service role)
 create or replace function public.profiles_guard_role()
 returns trigger language plpgsql as $$
 begin
   if TG_OP = 'UPDATE' and new.role is distinct from old.role then
-    if not public.is_admin(auth.uid()) then
+    -- Allow if auth.uid() is NULL (service role) OR if user is admin
+    if auth.uid() is not null and not public.is_admin(auth.uid()) then
       raise exception 'Only admins can change roles';
     end if;
   end if;

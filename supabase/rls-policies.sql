@@ -178,6 +178,12 @@ create policy "profiles read limited"
 on profiles for select
 using ( true );
 
+-- allow profile creation (for new user signups via edge function)
+drop policy if exists "profiles insert for new users" on profiles;
+create policy "profiles insert for new users"
+on profiles for insert
+with check ( true );  -- Service role bypasses RLS anyway
+
 -- users can update only their own profile (not role - blocked by trigger)
 drop policy if exists "profiles upsert self" on profiles;
 create policy "profiles upsert self"
