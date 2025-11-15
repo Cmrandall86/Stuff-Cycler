@@ -1,0 +1,13 @@
+[build]
+  command = "npm run build"
+  publish = "dist"         # Vite's default output
+
+# Optional: set Node version if you want to pin it
+[build.environment]
+  NODE_VERSION = "20.17.0"
+
+# SPA fallback so client-side routing works on reload
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
