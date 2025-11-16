@@ -1,22 +1,22 @@
 import { Link } from '@tanstack/react-router'
-import type { Item, ItemPhoto } from '../lib/types'
+import type { Item, ItemImage } from '../lib/types'
 import Card from './ui/Card'
 import Badge from './ui/Badge'
 
 interface ItemCardProps {
-  item: Item & { item_photos?: ItemPhoto[] }
+  item: Item & { item_images?: ItemImage[] }
 }
 
 export default function ItemCard({ item }: ItemCardProps) {
-  const firstPhoto = item.item_photos?.[0]
+  const firstImage = item.item_images?.[0]
 
   return (
     <Link to="/item/$id" params={{ id: item.id }}>
       <Card className="p-4 hover:border-mint-400 transition-colors cursor-pointer">
-        {firstPhoto && (
+        {firstImage && (
           <div className="w-full h-48 bg-base-700 rounded-lg mb-4 overflow-hidden">
             <img
-              src={firstPhoto.storage_path}
+              src={firstImage.path}
               alt={item.title}
               className="w-full h-full object-cover"
             />

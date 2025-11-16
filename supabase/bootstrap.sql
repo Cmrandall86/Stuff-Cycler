@@ -34,14 +34,14 @@ create table if not exists items (
   updated_at timestamptz not null default now()
 );
 
-create table if not exists item_photos (
+create table if not exists item_images (
   id uuid primary key default gen_random_uuid(),
   item_id uuid not null references items(id) on delete cascade,
-  storage_path text not null,
+  path text not null,
   sort_order int not null default 0
 );
 
-create table if not exists item_visibility (
+create table if not exists item_visibility_groups (
   item_id uuid not null references items(id) on delete cascade,
   group_id uuid not null references groups(id) on delete cascade,
   tier int not null default 1,

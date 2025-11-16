@@ -1,8 +1,8 @@
 alter table groups enable row level security;
 alter table group_members enable row level security;
 alter table items enable row level security;
-alter table item_photos enable row level security;
-alter table item_visibility enable row level security;
+alter table item_images enable row level security;
+alter table item_visibility_groups enable row level security;
 alter table interests enable row level security;
 alter table reservations enable row level security;
 alter table profiles enable row level security;
@@ -16,7 +16,7 @@ drop policy if exists "groups: insert self owner" on groups;
 drop policy if exists "groups: owner write" on groups;
 drop policy if exists "groups: owner delete" on groups;
 
-create policy "groups: read mine"
+create policy "groups_select"
 on groups for select
 using (
   owner_id = auth.uid()
@@ -26,15 +26,15 @@ using (
   )
 );
 
-create policy "groups: insert self owner"
+create policy "groups_insert"
 on groups for insert
 with check ( owner_id = auth.uid() );
 
-create policy "groups: owner write"
+create policy "groups_update"
 on groups for update using (owner_id = auth.uid())
 with check (owner_id = auth.uid());
 
-create policy "groups: owner delete"
+create policy "groups_delete"
 on groups for delete using (owner_id = auth.uid());
 
 -- Group members
@@ -45,32 +45,50 @@ drop policy if exists "group_members: read mine" on group_members;
 drop policy if exists "group_members: owner can insert" on group_members;
 drop policy if exists "group_members: owner can delete" on group_members;
 
-create policy "group_members: read mine"
+create policy "group_members_select"
 on group_members for select
 using (
+  user_id = auth.uid()
+  or exists (
+    select 1 from group_members gm2
+    where gm2.group_id = group_members.group_id
+    and gm2.user_id = auth.uid()
+  )
+);
+
+create policy "group_members_insert"
+on group_members for insert
+with check (
   user_id = auth.uid()
   or exists (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid())
 );
 
-create policy "group_members: owner can insert"
-on group_members for insert
-with check (
-  exists (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid())
-);
-
-create policy "group_members: owner can delete"
+create policy "group_members_delete"
 on group_members for delete
 using (
-  exists (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid())
+  (user_id = auth.uid() and not exists (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid()))
+  or
+  (exists (select 1 from groups g where g.id = group_members.group_id and g.owner_id = auth.uid()) and user_id <> auth.uid())
 );
 
--- Items (core visibility rule)
-create policy "item read if owner or in visible groups" on items
+-- Items (core visibility rule - supports public, owner, and group visibility)
+create policy "items_select_policy" on items
 for select using (
-  owner_id = auth.uid() OR EXISTS (
-    select 1 from item_visibility iv
-    join group_members gm on gm.group_id = iv.group_id
-    where iv.item_id = items.id and gm.user_id = auth.uid()
+  -- Public items are visible to everyone (even unauthenticated)
+  visibility = 'public'
+  OR
+  -- Owner can always see their items
+  owner_id = auth.uid()
+  OR
+  -- Group members can see group-visible items
+  (
+    visibility = 'groups' 
+    AND auth.uid() IS NOT NULL
+    AND EXISTS (
+      select 1 from item_visibility_groups iv
+      join group_members gm on gm.group_id = iv.group_id
+      where iv.item_id = items.id and gm.user_id = auth.uid()
+    )
   )
 );
 create policy "item insert by owner" on items
@@ -80,51 +98,63 @@ for update using ( owner_id = auth.uid() );
 create policy "item delete by owner" on items
 for delete using ( owner_id = auth.uid() );
 
--- Photos inherit from parent item
-create policy "photo read if can read item" on item_photos
+-- Images inherit from parent item (supports public visibility)
+create policy "item_images_select_policy" on item_images
 for select using (
   EXISTS (
-    select 1 from items i where i.id = item_photos.item_id and (
-      i.owner_id = auth.uid() OR EXISTS (
-        select 1 from item_visibility iv
-        join group_members gm on gm.group_id = iv.group_id
-        where iv.item_id = i.id and gm.user_id = auth.uid()
+    select 1 from items i where i.id = item_images.item_id and (
+      -- Public items - anyone can see images
+      i.visibility = 'public'
+      OR
+      -- Owner can see their images
+      i.owner_id = auth.uid()
+      OR
+      -- Group members can see group-visible item images
+      (
+        i.visibility = 'groups'
+        AND auth.uid() IS NOT NULL
+        AND EXISTS (
+          select 1 from item_visibility_groups iv
+          join group_members gm on gm.group_id = iv.group_id
+          where iv.item_id = i.id and gm.user_id = auth.uid()
+        )
       )
     )
   )
 );
-create policy "photo write by owner" on item_photos
+create policy "item_images_write_owner" on item_images
 for all using (
   EXISTS (
-    select 1 from items i where i.id = item_photos.item_id and i.owner_id = auth.uid()
+    select 1 from items i where i.id = item_images.item_id and i.owner_id = auth.uid()
   )
 ) with check (
   EXISTS (
-    select 1 from items i where i.id = item_photos.item_id and i.owner_id = auth.uid()
+    select 1 from items i where i.id = item_images.item_id and i.owner_id = auth.uid()
   )
 );
 
--- Item visibility (owner only)
-create policy "visibility read if can read item" on item_visibility
+-- Item visibility (simplified to avoid recursion - NO items check in SELECT!)
+create policy "ivg_select" on item_visibility_groups
 for select using (
+  -- You're in the group (that's it - no items check to avoid recursion)
   EXISTS (
-    select 1 from items i where i.id = item_visibility.item_id and (
-      i.owner_id = auth.uid() OR EXISTS (
-        select 1 from item_visibility iv
-        join group_members gm on gm.group_id = iv.group_id
-        where iv.item_id = i.id and gm.user_id = auth.uid()
-      )
-    )
+    select 1 from group_members gm
+    where gm.group_id = item_visibility_groups.group_id
+    and gm.user_id = auth.uid()
   )
 );
-create policy "visibility write by owner" on item_visibility
+create policy "ivg_write" on item_visibility_groups
 for all using (
   EXISTS (
-    select 1 from items i where i.id = item_visibility.item_id and i.owner_id = auth.uid()
+    select 1 from items i 
+    where i.id = item_visibility_groups.item_id 
+    and i.owner_id = auth.uid()
   )
 ) with check (
   EXISTS (
-    select 1 from items i where i.id = item_visibility.item_id and i.owner_id = auth.uid()
+    select 1 from items i 
+    where i.id = item_visibility_groups.item_id 
+    and i.owner_id = auth.uid()
   )
 );
 
@@ -134,7 +164,7 @@ for select using (
   EXISTS (
     select 1 from items i where i.id = interests.item_id and (
       i.owner_id = auth.uid() OR EXISTS (
-        select 1 from item_visibility iv
+        select 1 from item_visibility_groups iv
         join group_members gm on gm.group_id = iv.group_id
         where iv.item_id = i.id and gm.user_id = auth.uid()
       )
@@ -146,7 +176,7 @@ for insert with check (
   EXISTS (
     select 1 from items i where i.id = interests.item_id and (
       i.owner_id = auth.uid() OR EXISTS (
-        select 1 from item_visibility iv
+        select 1 from item_visibility_groups iv
         join group_members gm on gm.group_id = iv.group_id
         where iv.item_id = i.id and gm.user_id = auth.uid()
       )

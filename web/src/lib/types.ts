@@ -28,14 +28,14 @@ export interface Item {
   updated_at: string
 }
 
-export interface ItemPhoto {
+export interface ItemImage {
   id: string
   item_id: string
-  storage_path: string
+  path: string
   sort_order: number
 }
 
-export interface ItemVisibility {
+export interface ItemVisibilityGroup {
   item_id: string
   group_id: string
   tier: number

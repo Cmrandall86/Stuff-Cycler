@@ -1,45 +1,66 @@
-import { useGroups } from '@/hooks/useGroups'
-import Card from '@/components/ui/Card'
+import { useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
+import Card from '@/components/ui/Card'
+import Badge from '@/components/ui/Badge'
+import { useMyGroups } from '@/features/groups/api'
+import GroupCreateModal from '@/features/groups/components/GroupCreateModal'
+import GroupEditModal from '@/features/groups/components/GroupEditModal'
+import GroupMembersPanel from '@/features/groups/components/GroupMembersPanel'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function Groups() {
-  const { data: groups, isLoading, error } = useGroups()
+  const { data: groups, isLoading } = useMyGroups()
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
-  if (isLoading) {
-    return <div className="text-ink-500">Loading groups...</div>
-  }
-
-  if (error) {
-    return <div className="text-red-500">Error loading groups: {error.message}</div>
-  }
+  // Resolve current user id
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id ?? null))
+  }, [])
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-ink-400">Groups</h1>
-        <Button className="btn-accent">Create Group</Button>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl text-ink-400">My Groups</h1>
+        <Button className="btn-accent" onClick={() => setCreateOpen(true)}>Create Group</Button>
       </div>
-      {!groups || groups.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-ink-600 mb-4">No groups yet.</p>
-          <Button className="btn-accent">Create your first group</Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {groups.map((group) => (
-            <Card key={group.id} className="p-4">
-              <h2 className="text-xl font-semibold text-ink-400 mb-2">{group.name}</h2>
-              {group.description && (
-                <p className="text-ink-600 mb-2">{group.description}</p>
-              )}
-              <div className="text-sm text-ink-600">
-                {group.is_invite_only ? 'Invite only' : 'Open'}
+
+      {isLoading && <div className="text-ink-600">Loading groups…</div>}
+
+      <div className="grid gap-4">
+        {groups?.map(g => {
+          const isOwner = currentUserId && g.owner_id === currentUserId
+          return (
+            <Card key={g.id} className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-ink-400 font-medium">{g.name}</div>
+                    {g.is_invite_only && (
+                      <Badge variant="secondary">Invite only</Badge>
+                    )}
+                  </div>
+                  <div className="text-ink-600 text-sm">{g.description || '—'}</div>
+                </div>
+                {isOwner && (
+                  <Button variant="secondary" onClick={() => setEditId(g.id)}>
+                    Edit
+                  </Button>
+                )}
               </div>
+
+              <GroupMembersPanel groupId={g.id} />
             </Card>
-          ))}
-        </div>
+          )
+        })}
+        {!groups?.length && !isLoading && <div className="text-ink-600">You don't belong to any groups yet.</div>}
+      </div>
+
+      <GroupCreateModal isOpen={createOpen} onClose={() => setCreateOpen(false)} />
+      {editId && (
+        <GroupEditModal groupId={editId} isOpen={!!editId} onClose={() => setEditId(null)} />
       )}
     </div>
   )
 }
-

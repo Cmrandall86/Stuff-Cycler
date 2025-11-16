@@ -6,8 +6,8 @@
 2. Upload flow:
    - Client compresses image (<= 1600px longest side, ~0.8 quality), strips EXIF.
    - Request signed upload URL via Supabase.
-   - Store `storage_path` in `item_photos`.
-3. Download: generate signed URL per photo (or proxy via edge function later). Keep bucket private to avoid public scraping.
+   - Store `path` in `item_images`.
+3. Download: generate signed URL per image (or proxy via edge function later). Keep bucket private to avoid public scraping.
 
 ## Bucket Configuration
 
