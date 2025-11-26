@@ -6,7 +6,8 @@ import './theme/tokens.css'
 import './App.css'
 import Root from './routes/Root'
 import Feed from './routes/Feed'
-import NewItem from './routes/NewItem'
+import ItemForm from '@/features/items/ItemForm'
+import ItemEdit from './routes/ItemEdit'
 import Groups from './routes/Groups'
 import ItemDetail from './routes/Item'
 import SignIn from './routes/SignIn'
@@ -34,7 +35,9 @@ const newItemRoute = createRoute({
   path: '/new',
   component: () => (
     <AuthGate>
-      <NewItem />
+      <div className="max-w-5xl mx-auto py-6">
+        <ItemForm />
+      </div>
     </AuthGate>
   ),
 })
@@ -50,6 +53,15 @@ const groupsRoute = createRoute({
 })
 
 const itemRoute = createRoute({ getParentRoute: () => rootRoute, path: '/item/$id', component: ItemDetail })
+const itemEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/item/$id/edit',
+  component: () => (
+    <AuthGate>
+      <ItemEdit />
+    </AuthGate>
+  ),
+})
 const signInRoute = createRoute({ getParentRoute: () => rootRoute, path: '/signin', component: SignIn })
 const signUpRoute = createRoute({ getParentRoute: () => rootRoute, path: '/signup', component: SignUp })
 const resetPasswordRoute = createRoute({ getParentRoute: () => rootRoute, path: '/reset-password', component: ResetPassword })
@@ -69,6 +81,7 @@ const routeTree = rootRoute.addChildren([
   newItemRoute,
   groupsRoute,
   itemRoute,
+  itemEditRoute,
   signInRoute,
   signUpRoute,
   resetPasswordRoute,

@@ -151,7 +151,7 @@ export function useCreateGroup() {
       if (!user) throw new Error('Not authenticated')
 
       const payload = {
-        owner_id: user.id, // RLS requires it matches auth.uid() for insert
+        owner_id: user.id,
         name: input.name,
         description: input.description ?? null,
         is_invite_only: input.is_invite_only ?? true,
@@ -212,7 +212,7 @@ export function useLeaveGroup(groupId: string) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
-      // If user is owner, disallow leaving (for now).
+      // If user is owner, disallow leaving
       const { data: g } = await supabase.from('groups').select('owner_id').eq('id', groupId).single()
       if (g?.owner_id === user.id) {
         throw new Error('Owners cannot leave their own group. (Transfer ownership or delete the group.)')
@@ -236,11 +236,76 @@ export function useLeaveGroup(groupId: string) {
   })
 }
 
+export function useDeleteGroup(groupId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      // Only owner can delete
+      const { data: g } = await supabase.from('groups').select('owner_id').eq('id', groupId).single()
+      if (g?.owner_id !== user.id) {
+        throw new Error('Only the group owner can delete the group')
+      }
+
+      const { error } = await supabase
+        .from('groups')
+        .delete()
+        .eq('id', groupId)
+      
+      if (error) {
+        console.error('Error deleting group:', error)
+        throw error
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.mine() })
+      qc.invalidateQueries({ queryKey: qk.all })
+    },
+  })
+}
+
+export function useAddMember(groupId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase
+        .from('group_members')
+        .insert({
+          group_id: groupId,
+          user_id: userId,
+          role: 'member',
+        })
+      
+      if (error) {
+        console.error('Error adding member:', error)
+        throw error
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.members(groupId) })
+    },
+  })
+}
+
 export function useRemoveMember(groupId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (userId: string) => {
-      // RLS allows only owner to remove; rely on policy
+      // Check if trying to remove the last owner
+      const { data: members } = await supabase
+        .from('group_members')
+        .select('role')
+        .eq('group_id', groupId)
+      
+      const ownerCount = members?.filter(m => m.role === 'owner').length ?? 0
+      const targetMember = members?.find(m => m.role === 'owner')
+      
+      if (ownerCount === 1 && targetMember) {
+        throw new Error('Cannot remove the last owner of the group')
+      }
+
       const { error } = await supabase
         .from('group_members')
         .delete()
@@ -258,3 +323,43 @@ export function useRemoveMember(groupId: string) {
   })
 }
 
+// --- role management ---
+
+export function useUpdateMemberRole(groupId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: 'owner' | 'admin' | 'member' }) => {
+      // Client-side validation: ensure we don't demote the last owner
+      const { data: members } = await supabase
+        .from('group_members')
+        .select('user_id, role')
+        .eq('group_id', groupId)
+      
+      const ownerCount = members?.filter(m => m.role === 'owner').length ?? 0
+      const targetMember = members?.find(m => m.user_id === userId)
+      
+      if (targetMember?.role === 'owner' && ownerCount === 1 && role !== 'owner') {
+        throw new Error('Cannot demote the last owner of the group')
+      }
+
+      // If promoting to owner, ensure there's only one owner
+      if (role === 'owner' && ownerCount >= 1) {
+        throw new Error('A group can only have one owner. Demote the current owner first.')
+      }
+
+      const { error } = await supabase
+        .from('group_members')
+        .update({ role })
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
+      
+      if (error) {
+        console.error('Error updating member role:', error)
+        throw error
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.members(groupId) })
+    },
+  })
+}

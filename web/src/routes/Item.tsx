@@ -1,10 +1,32 @@
-import { useParams } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import { Link, useParams, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabaseClient'
+import Button from '../components/ui/Button'
 import type { Item } from '../lib/types'
+import { useDeleteItem } from '@/features/items/api'
 
 export default function ItemDetail() {
   const { id } = useParams({ from: '/item/$id' })
+  const navigate = useNavigate()
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const deleteItem = useDeleteItem(id)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id ?? null)
+    })
+  }, [])
+
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+      deleteItem.mutate(undefined, {
+        onSuccess: () => {
+          navigate({ to: '/' })
+        },
+      })
+    }
+  }
 
   const { data: item, isLoading, error } = useQuery({
     queryKey: ['item', id],
@@ -35,10 +57,28 @@ export default function ItemDetail() {
   if (error) return <div className="text-red-500">Error: {error.message}</div>
   if (!item) return <div className="text-ink-600">Item not found</div>
 
+  const isOwner = currentUserId && item.owner_id === currentUserId
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="card p-6">
-        <h1 className="text-3xl font-bold mb-4 text-ink-400">{item.title}</h1>
+        <div className="flex items-start justify-between mb-4">
+          <h1 className="text-3xl font-bold text-ink-400">{item.title}</h1>
+          {isOwner && (
+            <div className="flex gap-2">
+              <Link to={`/item/${id}/edit`}>
+                <Button variant="secondary">Edit</Button>
+              </Link>
+              <Button 
+                variant="danger" 
+                onClick={handleDelete}
+                disabled={deleteItem.isPending}
+              >
+                {deleteItem.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          )}
+        </div>
         {item.description && <p className="text-ink-500 mb-4">{item.description}</p>}
         {item.condition && <p className="text-ink-600 mb-2">Condition: {item.condition}</p>}
         {item.category && <p className="text-ink-600 mb-2">Category: {item.category}</p>}

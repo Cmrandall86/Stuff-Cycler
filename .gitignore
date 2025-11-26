@@ -36,3 +36,7 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 
+# Supabase
+supabase/.temp/
+supabase/supabase/
+

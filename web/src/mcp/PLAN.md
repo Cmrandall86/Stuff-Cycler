@@ -19,3 +19,9 @@
 ## Moderation MCP
 - Regex + ML for phone numbers, slurs, prohibited items → soft block with rationale.
 
+## Supabase Archive MCP
+- Functions: `searchArchive(query)`, `getScriptByCategory(category)`, `getScriptContent(filename)`
+- Purpose: Access historical debugging and fix scripts for reference
+- Location: `/supabase/archive-debug-scripts/`
+- See: `SUPABASE_ARCHIVE.md` for details
+

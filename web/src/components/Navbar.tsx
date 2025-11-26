@@ -5,13 +5,10 @@ import { useRole } from '@/hooks/useRole'
 
 export default function Navbar() {
   const { user } = useAuth()
-  const { data: role, isLoading, error } = useRole()
+  const { data: role } = useRole()
   const isAdmin = role === 'admin' // role only loads when user exists, so no need for !!user check
   const router = useRouterState()
   const currentPath = router.location.pathname
-
-  // Debug logging (remove after fixing)
-  console.log('Navbar role debug', { user: !!user, role, isLoading, error, isAdmin })
 
   // Helper function to check if a path is active
   const isActive = (path: string) => {

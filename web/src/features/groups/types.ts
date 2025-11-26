@@ -1,3 +1,5 @@
+export type Role = 'owner' | 'admin' | 'member'
+
 export type Group = {
   id: string
   owner_id: string
@@ -10,7 +12,7 @@ export type Group = {
 export type GroupMember = {
   group_id: string
   user_id: string
-  role: 'owner' | 'member'
+  role: Role
   joined_at: string
   display_name?: string | null
   avatar_url?: string | null
