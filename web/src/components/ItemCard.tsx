@@ -4,22 +4,28 @@ import Card from './ui/Card'
 import Badge from './ui/Badge'
 
 interface ItemCardProps {
-  item: Item & { item_images?: ItemImage[] }
+  item: Item & { item_images?: (ItemImage & { signed_url?: string })[] }
 }
 
 export default function ItemCard({ item }: ItemCardProps) {
   const firstImage = item.item_images?.[0]
+  const imageUrl = firstImage?.signed_url || firstImage?.path
 
   return (
     <Link to="/item/$id" params={{ id: item.id }}>
       <Card className="p-4 hover:border-mint-400 transition-colors cursor-pointer">
-        {firstImage && (
+        {imageUrl ? (
           <div className="w-full h-48 bg-base-700 rounded-lg mb-4 overflow-hidden">
             <img
-              src={firstImage.path}
+              src={imageUrl}
               alt={item.title}
               className="w-full h-full object-cover"
+              loading="lazy"
             />
+          </div>
+        ) : (
+          <div className="w-full h-48 bg-base-700 rounded-lg mb-4 flex items-center justify-center">
+            <span className="text-ink-600 text-sm">No image</span>
           </div>
         )}
         <h3 className="text-lg font-semibold text-ink-400 mb-2">{item.title}</h3>

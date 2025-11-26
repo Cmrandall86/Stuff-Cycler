@@ -3,17 +3,21 @@ import { useNavigate } from '@tanstack/react-router'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
+import ImageUploader from '@/components/ImageUploader'
 import { useMyGroups } from '@/features/groups/api'
-import { useCreateItem, useUpdateItem, useItemGroups } from './api'
+import { useCreateItem, useUpdateItem, useItemGroups, useItemImages, uploadItemImages, useDeleteImage, updateImageOrder } from './api'
 import { supabase } from '@/lib/supabaseClient'
 import type { Item } from '@/lib/types'
+import type { ImageFile } from './types'
 
 export default function ItemForm({ itemId, item }: { itemId?: string; item?: Item }) {
   const navigate = useNavigate()
   const { data: groups } = useMyGroups()
   const { data: existingVisibilityGroups } = useItemGroups(itemId ?? '')
+  const { data: existingImages } = useItemImages(itemId ?? '')
   const createItem = useCreateItem()
   const updateItem = useUpdateItem(itemId ?? '')
+  const deleteImage = useDeleteImage()
   
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -22,6 +26,9 @@ export default function ItemForm({ itemId, item }: { itemId?: string; item?: Ite
   const [approxLocation, setApproxLocation] = useState('')
   const [visibility, setVisibility] = useState<'public' | 'groups'>('public')
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([])
+  const [images, setImages] = useState<ImageFile[]>([])
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([])
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
   const [error, setError] = useState('')
 
   // Load existing item data for edit mode
@@ -42,6 +49,19 @@ export default function ItemForm({ itemId, item }: { itemId?: string; item?: Ite
       setSelectedGroupIds(existingVisibilityGroups.map(vg => vg.group_id))
     }
   }, [existingVisibilityGroups])
+
+  // Load existing images for edit mode
+  useEffect(() => {
+    if (existingImages && existingImages.length > 0) {
+      const imageFiles: ImageFile[] = existingImages.map(img => ({
+        id: img.id,
+        url: img.signed_url,
+        isExisting: true,
+        sortOrder: img.sort_order,
+      }))
+      setImages(imageFiles)
+    }
+  }, [existingImages])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,18 +89,58 @@ export default function ItemForm({ itemId, item }: { itemId?: string; item?: Ite
     }
 
     try {
-      let newItem
+      setIsUploadingImages(true)
+      
+      let savedItem
       if (itemId) {
-        newItem = await updateItem.mutateAsync(formData)
+        savedItem = await updateItem.mutateAsync(formData)
       } else {
-        newItem = await createItem.mutateAsync(formData)
+        savedItem = await createItem.mutateAsync(formData)
+      }
+      
+      const finalItemId = savedItem.id
+
+      // Delete marked images
+      if (imagesToDelete.length > 0) {
+        await Promise.all(
+          imagesToDelete.map(id => 
+            deleteImage.mutateAsync({ imageId: id, itemId: finalItemId })
+          )
+        )
+      }
+
+      // Upload new images
+      const newFiles = images.filter(img => !img.isExisting && img.file).map(img => img.file!)
+      if (newFiles.length > 0) {
+        await uploadItemImages(finalItemId, newFiles)
+      }
+
+      // Update image order if needed
+      const existingImageIds = images
+        .filter(img => img.isExisting && !imagesToDelete.includes(img.id))
+        .map(img => img.id)
+      
+      if (existingImageIds.length > 0) {
+        await updateImageOrder(finalItemId, existingImageIds)
       }
       
       // Navigate to the item detail page
-      navigate({ to: `/item/${newItem.id}` })
+      navigate({ to: `/item/${finalItemId}` })
     } catch (err: any) {
       setError(err.message || 'Failed to save item')
+    } finally {
+      setIsUploadingImages(false)
     }
+  }
+
+  const handleImageRemove = (imageId: string) => {
+    const imageToRemove = images.find(img => img.id === imageId)
+    if (imageToRemove?.isExisting) {
+      // Mark for deletion
+      setImagesToDelete(prev => [...prev, imageId])
+    }
+    // Remove from UI
+    setImages(prev => prev.filter(img => img.id !== imageId))
   }
 
   const handleGroupToggle = (groupId: string) => {
@@ -91,7 +151,7 @@ export default function ItemForm({ itemId, item }: { itemId?: string; item?: Ite
     )
   }
 
-  const isPending = createItem.isPending || updateItem.isPending
+  const isPending = createItem.isPending || updateItem.isPending || isUploadingImages
 
   return (
     <Card className="max-w-3xl mx-auto p-6">
@@ -142,6 +202,20 @@ export default function ItemForm({ itemId, item }: { itemId?: string; item?: Ite
           onChange={(e) => setApproxLocation(e.target.value)}
           placeholder="e.g., Downtown, North Side"
         />
+
+        {/* Images section */}
+        <div className="border-t border-base-700 pt-6">
+          <h3 className="text-lg text-ink-400 mb-4">Images</h3>
+          <ImageUploader
+            images={images}
+            onChange={setImages}
+            onRemove={handleImageRemove}
+            maxFiles={5}
+          />
+          <p className="text-sm text-ink-600 mt-2">
+            Add up to 5 images. First image will be the cover photo. On mobile, you can take photos directly.
+          </p>
+        </div>
 
         {/* Who can see this section */}
         <div className="border-t border-base-700 pt-6">
@@ -216,7 +290,7 @@ export default function ItemForm({ itemId, item }: { itemId?: string; item?: Ite
             className="btn-accent"
             disabled={isPending}
           >
-            {isPending ? 'Saving...' : (itemId ? 'Update Item' : 'Create Item')}
+            {isUploadingImages ? 'Uploading images...' : isPending ? 'Saving...' : (itemId ? 'Update Item' : 'Create Item')}
           </Button>
           <Button
             type="button"

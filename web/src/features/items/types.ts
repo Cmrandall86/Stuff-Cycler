@@ -14,3 +14,19 @@ export type ItemVisibilityGroup = {
   tier: number
 }
 
+export type ImageFile = {
+  id: string
+  file?: File
+  url?: string
+  isExisting: boolean
+  sortOrder: number
+}
+
+export type ItemImageWithUrl = {
+  id: string
+  item_id: string
+  path: string
+  sort_order: number
+  signed_url?: string
+}
+
